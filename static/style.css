@@ -48,6 +48,40 @@
   }
 }
 
+/* Explicit dark mode (overrides media query) */
+html[data-theme="dark"] {
+  --primary: #ffffff;
+  --on-primary: #333333;
+  --background: #141414;
+  --surface: #1e1e1e;
+  --dark-gray: #cccccc;
+  --border: #3c3c3c;
+  --text: #ffffff;
+  --primary-shadow: #505050;
+  --header-bg: #1a1a1a;
+  --board-chip-bg: #333333;
+  --board-chip-text: #ffffff;
+  --overlay: rgba(255, 255, 255, 0.04);
+  --macro-calories: #aaaaaa;
+}
+
+/* Explicit light mode (overrides media query) */
+html[data-theme="light"] {
+  --primary: #333333;
+  --on-primary: #ffffff;
+  --background: #ffffff;
+  --surface: #f8f8f8;
+  --dark-gray: #666666;
+  --border: #e0e0e0;
+  --text: #333333;
+  --primary-shadow: #f0f0f0;
+  --header-bg: #333333;
+  --board-chip-bg: #f0f0f0;
+  --board-chip-text: #333333;
+  --overlay: rgba(0, 0, 0, 0.04);
+  --macro-calories: #3a3a3a;
+}
+
 /* ── Base ───────────────────────────────────────────── */
 body {
   font-family:
@@ -616,6 +650,33 @@ a {
 .error-state p {
   font-size: 15px;
   line-height: 1.5;
+}
+
+/* ── Theme toggle button ────────────────────────────── */
+.theme-toggle-btn {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 200;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+}
+
+.theme-toggle-btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* ── Responsive ─────────────────────────────────────── */
