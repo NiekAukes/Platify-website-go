@@ -1,4 +1,5 @@
 services:
+  # ── Development (live-reload with air) ──────────────────────────────────────
   web:
     build:
       context: .
@@ -14,6 +15,21 @@ services:
     environment:
       - PORT=8080
       - GIN_MODE=debug
+
+  # ── Production (optimised multi-stage image) ────────────────────────────────
+  web-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: [prod]
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - GIN_MODE=release
+      # Override the API base URL if needed:
+      # - API_BASE_URL=https://platify.aukespot.com/
+    restart: unless-stopped
 
 volumes:
   go-build-cache:
