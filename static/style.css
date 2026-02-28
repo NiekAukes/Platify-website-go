@@ -169,7 +169,9 @@ a {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  transition: opacity 0.2s ease, transform 0.25s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.25s ease;
 }
 
 .nav-toggle .nav-icon-hide {
@@ -328,6 +330,84 @@ a {
 
 .btn-primary:hover {
   opacity: 0.8;
+}
+
+.btn-secondary {
+  display: inline-block;
+  background: transparent;
+  color: var(--primary);
+  padding: 10px 24px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  font-weight: 600;
+  font-size: 14px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  background: var(--overlay);
+}
+
+/* ── Home: How It Works section ──────────────────── */
+.home-hiw {
+  padding: 64px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.home-hiw > h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.home-hiw-subtitle {
+  font-size: 15px;
+  color: var(--dark-gray);
+  margin-bottom: 40px;
+}
+
+.home-hiw-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 28px;
+  text-align: center;
+}
+
+.home-hiw-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-hiw-step .hiw-number {
+  margin-bottom: 4px;
+}
+
+.home-hiw-step h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.home-hiw-step p {
+  font-size: 14px;
+  color: var(--dark-gray);
+  line-height: 1.55;
+  max-width: 220px;
+}
+
+.home-hiw-step a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.home-hiw-more {
+  margin-top: 36px;
 }
 
 /* ── Detail page (recipe) ─────────────────────────── */
@@ -908,6 +988,7 @@ details[open] > .faq-answer {
   font-size: 18px;
   font-weight: 700;
   margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 .hiw-content p {
@@ -1011,7 +1092,10 @@ details[open] > .faq-answer {
     overflow: hidden;
     max-height: 0;
     opacity: 0;
-    transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.2s ease,
+      padding 0.3s ease;
   }
 
   .site-header nav.open {
@@ -1026,7 +1110,10 @@ details[open] > .faq-answer {
     color: rgba(255, 255, 255, 0.85);
     transform: translateY(-8px);
     opacity: 0;
-    transition: transform 0.25s ease, opacity 0.25s ease, background 0.15s;
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease,
+      background 0.15s;
   }
 
   .site-header nav.open a {
@@ -1034,10 +1121,18 @@ details[open] > .faq-answer {
     opacity: 1;
   }
 
-  .site-header nav.open a:nth-child(1) { transition-delay: 0.05s; }
-  .site-header nav.open a:nth-child(2) { transition-delay: 0.1s; }
-  .site-header nav.open a:nth-child(3) { transition-delay: 0.15s; }
-  .site-header nav.open a:nth-child(4) { transition-delay: 0.2s; }
+  .site-header nav.open a:nth-child(1) {
+    transition-delay: 0.05s;
+  }
+  .site-header nav.open a:nth-child(2) {
+    transition-delay: 0.1s;
+  }
+  .site-header nav.open a:nth-child(3) {
+    transition-delay: 0.15s;
+  }
+  .site-header nav.open a:nth-child(4) {
+    transition-delay: 0.2s;
+  }
 
   .site-header nav a:hover {
     background: rgba(255, 255, 255, 0.08);
