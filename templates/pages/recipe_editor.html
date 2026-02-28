@@ -600,7 +600,7 @@
       var isLast  = idx === state.sections.length - 1;
       var collapsed = collapsedSections[s._id] ? ' collapsed' : '';
       var html = '<div class="editor-section-block' + collapsed + '" id="sec-' + s._id + '">' +
-        '<div class="editor-section-header" onclick="editorToggleSection(\'' + s._id + '\', event)">' +
+        '<div class="editor-section-header" role="button" tabindex="0" onclick="editorToggleSection(\'' + s._id + '\', event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();editorToggleSection(\'' + s._id + '\', event);}">' +
         '<span class="editor-section-collapse-icon">▸</span>' +
         '<span class="editor-section-type-badge">' + esc(s.type === "ShoppingList" ? "Shopping List" : s.type) + '</span>' +
         (s.type === "Custom" || s.type === "Video"
@@ -941,7 +941,7 @@
         var saved = localStorage.getItem(AUTOSAVE_KEY);
         if (!saved) return false;
         var data = JSON.parse(saved);
-        if (!data.state || !data.state.name && !data.state.sections.length && !data.state.image) return false;
+        if (!data.state || (!data.state.name && !data.state.sections.length && !data.state.image)) return false;
         // Show restore prompt
         var ago = "";
         if (data.savedAt) {
@@ -987,13 +987,15 @@
 
     // ── Keyboard shortcuts ────────────────────────────────────────────────
     document.addEventListener("keydown", function(e) {
+      var active = document.activeElement;
+      var inInput = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
       // Ctrl/Cmd+S: Export JSON
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         editorExportJSON();
       }
-      // Ctrl/Cmd+I: Import JSON (not when in an input)
-      if ((e.ctrlKey || e.metaKey) && e.key === "i") {
+      // Ctrl/Cmd+I: Import JSON (not when in an input/textarea)
+      if ((e.ctrlKey || e.metaKey) && e.key === "i" && !inInput) {
         e.preventDefault();
         editorImportJSON();
       }

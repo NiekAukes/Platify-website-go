@@ -1477,7 +1477,7 @@ a {
 
 .editor-section-block .editor-section-body {
   transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
-  max-height: 2000px;
+  max-height: 2000px; /* generous upper bound for collapse animation */
   opacity: 1;
   overflow: hidden;
 }
