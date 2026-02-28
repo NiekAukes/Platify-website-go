@@ -15,11 +15,11 @@
         </a>
         <span class="editor-topbar-title">Recipe Editor</span>
         <div class="editor-topbar-actions">
-          <button class="editor-btn editor-btn--secondary" onclick="editorImportJSON()" title="Import recipe from JSON">
+          <button class="editor-btn editor-btn--secondary" onclick="editorImportJSON()" title="Import recipe from JSON (Ctrl+I)">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11 16H13V10H16L12 6L8 10H11V16ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z"/></svg>
             Import JSON
           </button>
-          <button class="editor-btn editor-btn--secondary" onclick="editorExportJSON()" title="Export recipe as JSON">
+          <button class="editor-btn editor-btn--secondary" onclick="editorExportJSON()" title="Export recipe as JSON (Ctrl+S)">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M13 10H18L12 16L6 10H11V3H13V10ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z"/></svg>
             Export JSON
           </button>
@@ -66,7 +66,10 @@
                     <span class="editor-image-drop-hint">JPEG · PNG · GIF · WebP</span>
                   </div>
                   <img id="image-preview-thumb" alt="Recipe image preview" style="display:none" />
-                  <div class="editor-image-drop-overlay" id="image-drop-overlay"></div>
+                  <div class="editor-image-drop-overlay" id="image-drop-overlay">
+                    <div class="editor-upload-spinner" id="upload-spinner"></div>
+                    <span id="upload-overlay-text"></span>
+                  </div>
                 </div>
                 <input type="file" id="image-file-input" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="editorImageFileSelected(event)" />
                 <div class="editor-image-url-row">
@@ -159,6 +162,9 @@
       </div>
     </div>
 
+    <!-- ── Toast container ──────────────────────────────────── -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
     <script>
     // ─────────────────────────────────────────────────────────────────────────
     // Recipe Editor – state & live preview
@@ -173,6 +179,10 @@
       tags: [],
       sections: []
     };
+
+    var collapsedSections = {};
+    var dirty = false;
+    var AUTOSAVE_KEY = "platify_editor_autosave";
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -235,6 +245,8 @@
       state.description = document.getElementById("recipe-desc").value;
       state.image       = document.getElementById("recipe-image").value;
       updateImageDropZone();
+      dirty = true;
+      scheduleAutosave();
       renderPreview();
     }
 
@@ -280,9 +292,12 @@
       var zone    = document.getElementById("image-drop-zone");
       var errEl   = document.getElementById("image-upload-error");
       var overlay = document.getElementById("image-drop-overlay");
+      var spinner = document.getElementById("upload-spinner");
+      var overlayText = document.getElementById("upload-overlay-text");
       errEl.textContent = "";
       zone.classList.add("uploading");
-      overlay.textContent = "Uploading…";
+      spinner.style.display = "block";
+      overlayText.textContent = "Uploading…";
 
       var fd = new FormData();
       fd.append("image", file);
@@ -290,19 +305,30 @@
       fetch("/api/images/upload", { method: "POST", body: fd })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          zone.classList.remove("uploading");
-          overlay.textContent = "";
+          spinner.style.display = "none";
           if (data.url) {
+            overlayText.textContent = "✓";
+            zone.classList.add("upload-success");
+            setTimeout(function() {
+              zone.classList.remove("uploading", "upload-success");
+              overlayText.textContent = "";
+            }, 600);
             document.getElementById("recipe-image").value = data.url;
             editorSync();
+            showToast("Image uploaded successfully", "success");
           } else {
+            zone.classList.remove("uploading");
+            overlayText.textContent = "";
             errEl.textContent = data.error || "Upload failed.";
+            showToast(data.error || "Upload failed", "error");
           }
         })
         .catch(function() {
           zone.classList.remove("uploading");
-          overlay.textContent = "";
+          spinner.style.display = "none";
+          overlayText.textContent = "";
           errEl.textContent = "Upload failed. Please check your connection.";
+          showToast("Upload failed — check your connection", "error");
         });
     }
 
@@ -320,12 +346,16 @@
       if (!val) return;
       state.boards.push(val);
       input.value = "";
+      dirty = true;
+      scheduleAutosave();
       renderBoardChips();
       renderPreview();
     }
 
     function editorRemoveBoard(idx) {
       state.boards.splice(idx, 1);
+      dirty = true;
+      scheduleAutosave();
       renderBoardChips();
       renderPreview();
     }
@@ -347,12 +377,16 @@
       var dark  = document.getElementById("new-tag-dark").value;
       state.tags.push({ _id: uid(), name: name, lightColor: light, darkColor: dark });
       document.getElementById("new-tag-name").value = "";
+      dirty = true;
+      scheduleAutosave();
       renderTagsList();
       renderPreview();
     }
 
     function editorRemoveTag(id) {
       state.tags = state.tags.filter(function(t){ return t._id !== id; });
+      dirty = true;
+      scheduleAutosave();
       renderTagsList();
       renderPreview();
     }
@@ -374,7 +408,7 @@
 
     function editorUpdateTagColor(id, key, val) {
       var t = state.tags.find(function(x){ return x._id === id; });
-      if (t) { t[key] = val; renderTagsList(); renderPreview(); }
+      if (t) { t[key] = val; dirty = true; scheduleAutosave(); renderTagsList(); renderPreview(); }
     }
 
     // ── Sections ───────────────────────────────────────────────────────────
@@ -383,12 +417,16 @@
       var type = document.getElementById("new-section-type").value;
       var titleMap = { Ingredients: "Ingredients", Directions: "Directions", Nutrition: "Nutrition", Video: "Video", ShoppingList: "Shopping List", Custom: "New Section" };
       state.sections.push(normSection({ type: type, title: titleMap[type] || type }));
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
 
     function editorRemoveSection(id) {
       state.sections = state.sections.filter(function(s){ return s._id !== id; });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -399,6 +437,8 @@
       var tmp = state.sections[idx - 1];
       state.sections[idx - 1] = state.sections[idx];
       state.sections[idx] = tmp;
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -409,13 +449,15 @@
       var tmp = state.sections[idx + 1];
       state.sections[idx + 1] = state.sections[idx];
       state.sections[idx] = tmp;
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
 
     function editorSyncSectionTitle(id, val) {
       var s = state.sections.find(function(x){ return x._id === id; });
-      if (s) { s.title = val; renderPreview(); }
+      if (s) { s.title = val; dirty = true; scheduleAutosave(); renderPreview(); }
     }
 
     // Ingredients within a section
@@ -423,6 +465,8 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       s.ingredients.push({ _id: uid(), name: "", quantity: "", unit: "" });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -431,6 +475,8 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       s.ingredients = s.ingredients.filter(function(i){ return i._id !== ingId; });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -439,7 +485,7 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       var ing = s.ingredients.find(function(i){ return i._id === ingId; });
-      if (ing) { ing[field] = val; renderPreview(); }
+      if (ing) { ing[field] = val; dirty = true; scheduleAutosave(); renderPreview(); }
     }
 
     // Directions within a section
@@ -447,6 +493,8 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       s.directions.push({ _id: uid(), heading: "", text: "" });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -455,6 +503,8 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       s.directions = s.directions.filter(function(d){ return d._id !== dirId; });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -463,7 +513,7 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       var dir = s.directions.find(function(d){ return d._id === dirId; });
-      if (dir) { dir[field] = val; renderPreview(); }
+      if (dir) { dir[field] = val; dirty = true; scheduleAutosave(); renderPreview(); }
     }
 
     // Nutrition items within a section
@@ -471,6 +521,8 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       s.items.push({ _id: uid(), name: "", quantity: 0, unit: "", energy: 0, carbs: 0, proteins: 0, fats: 0 });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -479,6 +531,8 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       s.items = s.items.filter(function(i){ return i._id !== itemId; });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -487,13 +541,13 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       var item = s.items.find(function(i){ return i._id === itemId; });
-      if (item) { item[field] = val; renderPreview(); }
+      if (item) { item[field] = val; dirty = true; scheduleAutosave(); renderPreview(); }
     }
 
     // Video
     function editorSyncVideoLink(sectionId, val) {
       var s = state.sections.find(function(x){ return x._id === sectionId; });
-      if (s) { s.videoLink = val; renderPreview(); }
+      if (s) { s.videoLink = val; dirty = true; scheduleAutosave(); renderPreview(); }
     }
 
     // Shopping list items
@@ -501,6 +555,8 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       s.list.push({ _id: uid(), name: "" });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -509,6 +565,8 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       s.list = s.list.filter(function(i){ return i._id !== itemId; });
+      dirty = true;
+      scheduleAutosave();
       renderSectionsList();
       renderPreview();
     }
@@ -517,7 +575,7 @@
       var s = state.sections.find(function(x){ return x._id === sectionId; });
       if (!s) return;
       var item = s.list.find(function(i){ return i._id === itemId; });
-      if (item) { item.name = val; renderPreview(); }
+      if (item) { item.name = val; dirty = true; scheduleAutosave(); renderPreview(); }
     }
 
     // ── Render sections form ───────────────────────────────────────────────
@@ -525,7 +583,11 @@
     function renderSectionsList() {
       var el = document.getElementById("sections-list");
       if (!state.sections.length) {
-        el.innerHTML = '<p class="editor-empty-hint">No sections yet — add one above.</p>';
+        el.innerHTML = '<div class="editor-empty-state">' +
+          '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>' +
+          '<p class="editor-empty-hint">No sections yet</p>' +
+          '<p class="editor-empty-subhint">Add ingredients, directions, nutrition info and more using the dropdown above.</p>' +
+          '</div>';
         return;
       }
       el.innerHTML = state.sections.map(function(s, idx) {
@@ -536,13 +598,15 @@
     function renderSectionEditor(s, idx) {
       var isFirst = idx === 0;
       var isLast  = idx === state.sections.length - 1;
-      var html = '<div class="editor-section-block" id="sec-' + s._id + '">' +
-        '<div class="editor-section-header">' +
+      var collapsed = collapsedSections[s._id] ? ' collapsed' : '';
+      var html = '<div class="editor-section-block' + collapsed + '" id="sec-' + s._id + '">' +
+        '<div class="editor-section-header" onclick="editorToggleSection(\'' + s._id + '\', event)">' +
+        '<span class="editor-section-collapse-icon">▸</span>' +
         '<span class="editor-section-type-badge">' + esc(s.type === "ShoppingList" ? "Shopping List" : s.type) + '</span>' +
         (s.type === "Custom" || s.type === "Video"
-          ? '<input class="editor-input editor-input--inline-title" type="text" value="' + esc(s.title) + '" placeholder="Section title" oninput="editorSyncSectionTitle(\'' + s._id + '\', this.value)" />'
+          ? '<input class="editor-input editor-input--inline-title" type="text" value="' + esc(s.title) + '" placeholder="Section title" oninput="editorSyncSectionTitle(\'' + s._id + '\', this.value)" onclick="event.stopPropagation()" />'
           : '<span class="editor-section-title-static">' + esc(s.title) + '</span>') +
-        '<div class="editor-section-controls">' +
+        '<div class="editor-section-controls" onclick="event.stopPropagation()">' +
         (!isFirst ? '<button class="editor-btn editor-btn--icon" onclick="editorMoveSectionUp(\'' + s._id + '\')" title="Move up">↑</button>' : '') +
         (!isLast  ? '<button class="editor-btn editor-btn--icon" onclick="editorMoveSectionDown(\'' + s._id + '\')" title="Move down">↓</button>' : '') +
         '<button class="editor-btn editor-btn--icon editor-btn--danger" onclick="editorRemoveSection(\'' + s._id + '\')" title="Delete section">×</button>' +
@@ -777,8 +841,11 @@
         state.boards      = recipe.boards      || [];
         state.tags        = (recipe.tags || []).map(function(t){ return Object.assign({ _id: uid() }, t); });
         state.sections    = (recipe.sections || []).map(normSection);
+        dirty = true;
+        scheduleAutosave();
         editorCloseImportModal();
         pushToForm();
+        showToast("Recipe imported successfully", "success");
       } catch (e) {
         errorEl.textContent = "Invalid JSON: " + e.message;
       }
@@ -796,6 +863,7 @@
       a.download = (state.name || "recipe").replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".json";
       a.click();
       URL.revokeObjectURL(url);
+      showToast("Recipe exported as JSON", "success");
     }
 
     function buildExportRecipe() {
@@ -830,6 +898,111 @@
       cols.classList.toggle("preview-active");
     }
 
+    // ── Section collapse/expand ──────────────────────────────────────────
+    function editorToggleSection(id, event) {
+      collapsedSections[id] = !collapsedSections[id];
+      var block = document.getElementById("sec-" + id);
+      if (block) block.classList.toggle("collapsed", collapsedSections[id]);
+    }
+
+    // ── Toast notifications ───────────────────────────────────────────────
+    function showToast(message, type) {
+      var container = document.getElementById("toast-container");
+      var toast = document.createElement("div");
+      toast.className = "toast toast--" + (type || "info");
+      var icon = type === "success" ? "✓" : type === "error" ? "✗" : "ℹ";
+      toast.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + esc(message) + '</span>';
+      container.appendChild(toast);
+      // Trigger entrance animation
+      requestAnimationFrame(function() { toast.classList.add("toast--visible"); });
+      setTimeout(function() {
+        toast.classList.remove("toast--visible");
+        toast.classList.add("toast--exit");
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 2500);
+    }
+
+    // ── Auto-save to localStorage ─────────────────────────────────────────
+    var autosaveTimer = null;
+    function scheduleAutosave() {
+      if (autosaveTimer) clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(function() {
+        try {
+          localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({
+            state: state,
+            savedAt: new Date().toISOString()
+          }));
+        } catch(e) { /* localStorage full or unavailable */ }
+      }, 1000);
+    }
+
+    function tryRestoreAutosave() {
+      try {
+        var saved = localStorage.getItem(AUTOSAVE_KEY);
+        if (!saved) return false;
+        var data = JSON.parse(saved);
+        if (!data.state || !data.state.name && !data.state.sections.length && !data.state.image) return false;
+        // Show restore prompt
+        var ago = "";
+        if (data.savedAt) {
+          var diff = Math.floor((Date.now() - new Date(data.savedAt).getTime()) / 1000);
+          if (diff < 60) ago = diff + "s ago";
+          else if (diff < 3600) ago = Math.floor(diff / 60) + "m ago";
+          else ago = Math.floor(diff / 3600) + "h ago";
+        }
+        var restoreBar = document.createElement("div");
+        restoreBar.className = "editor-restore-bar";
+        restoreBar.innerHTML = '<span>📝 You have unsaved work' + (ago ? ' from ' + ago : '') + '</span>' +
+          '<button class="editor-btn editor-btn--add" id="restore-yes">Restore</button>' +
+          '<button class="editor-btn editor-btn--secondary-dark" id="restore-no">Discard</button>';
+        document.querySelector(".editor-form-scroll").prepend(restoreBar);
+
+        document.getElementById("restore-yes").addEventListener("click", function() {
+          var s = data.state;
+          state.name = s.name || "";
+          state.description = s.description || "";
+          state.image = s.image || "";
+          state.boards = s.boards || [];
+          state.tags = (s.tags || []).map(function(t){ return Object.assign({ _id: uid() }, t); });
+          state.sections = (s.sections || []).map(normSection);
+          pushToForm();
+          restoreBar.remove();
+          showToast("Previous session restored", "success");
+        });
+        document.getElementById("restore-no").addEventListener("click", function() {
+          localStorage.removeItem(AUTOSAVE_KEY);
+          restoreBar.remove();
+        });
+        return true;
+      } catch(e) { return false; }
+    }
+
+    // ── Unsaved changes warning ───────────────────────────────────────────
+    window.addEventListener("beforeunload", function(e) {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
+    // ── Keyboard shortcuts ────────────────────────────────────────────────
+    document.addEventListener("keydown", function(e) {
+      // Ctrl/Cmd+S: Export JSON
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        editorExportJSON();
+      }
+      // Ctrl/Cmd+I: Import JSON (not when in an input)
+      if ((e.ctrlKey || e.metaKey) && e.key === "i") {
+        e.preventDefault();
+        editorImportJSON();
+      }
+      // Escape: close modal
+      if (e.key === "Escape") {
+        editorCloseImportModal();
+      }
+    });
+
     // ── Keyboard shortcut: Enter in "add" inputs ───────────────────────────
 
     document.getElementById("new-board").addEventListener("keydown", function(e) {
@@ -846,6 +1019,7 @@
     renderSectionsList();
     updateImageDropZone();
     renderPreview();
+    tryRestoreAutosave();
     </script>
   </body>
 </html>

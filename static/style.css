@@ -1398,3 +1398,184 @@ a {
   border: 1px solid var(--border);
 }
 
+/* ── Toast notifications ──────────────────────────────── */
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 600;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--text);
+  color: var(--background);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast--exit {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.toast-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.toast--success .toast-icon {
+  color: #3a4;
+}
+
+.toast--error {
+  background: var(--delete);
+  color: #fff;
+}
+
+.toast--error .toast-icon {
+  color: #fff;
+}
+
+/* ── Collapsible sections ─────────────────────────────── */
+
+.editor-section-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.editor-section-collapse-icon {
+  font-size: 12px;
+  color: var(--dark-gray);
+  transition: transform 0.2s ease;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.editor-section-block:not(.collapsed) .editor-section-collapse-icon {
+  transform: rotate(90deg);
+}
+
+.editor-section-block .editor-section-body {
+  transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+  max-height: 2000px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.editor-section-block.collapsed .editor-section-body {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* ── Upload spinner ───────────────────────────────────── */
+
+.editor-upload-spinner {
+  display: none;
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-bottom: 6px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.editor-image-drop.upload-success .editor-image-drop-overlay {
+  background: rgba(50, 180, 80, 0.7);
+  font-size: 28px;
+}
+
+.editor-image-drop-overlay {
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Restore bar ──────────────────────────────────────── */
+
+.editor-restore-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--primary-shadow);
+  border: 1.5px solid var(--primary);
+  border-radius: var(--card-radius);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  animation: slideDown 0.3s ease;
+}
+
+.editor-restore-bar span:first-child {
+  flex: 1;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Better empty state ───────────────────────────────── */
+
+.editor-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.editor-empty-subhint {
+  font-size: 12px;
+  color: var(--dark-gray);
+  opacity: 0.7;
+  max-width: 260px;
+}
+
+/* ── Smooth focus rings ───────────────────────────────── */
+
+.editor-btn:focus-visible,
+.editor-input:focus-visible,
+.editor-select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Section add animation ────────────────────────────── */
+
+.editor-section-block {
+  animation: fadeInUp 0.25s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
