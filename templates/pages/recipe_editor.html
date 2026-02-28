@@ -52,8 +52,28 @@
               </div>
 
               <div class="editor-field">
-                <label class="editor-label" for="recipe-image">Image URL</label>
-                <input class="editor-input" id="recipe-image" type="url" placeholder="https://…" oninput="editorSync()" />
+                <label class="editor-label">Recipe image</label>
+                <!-- Drag-and-drop / click-to-browse upload zone -->
+                <div class="editor-image-drop" id="image-drop-zone"
+                     ondragover="editorImageDragOver(event)"
+                     ondragleave="editorImageDragLeave(event)"
+                     ondrop="editorImageDrop(event)"
+                     onclick="document.getElementById('image-file-input').click()"
+                     title="Click or drag an image here">
+                  <div class="editor-image-drop-content" id="image-drop-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M21 15V19C21 19.5523 20.5523 20 20 20H4C3.44772 20 3 19.5523 3 19V15H5V18H19V15H21ZM13 12.172L17.071 8.1L18.485 9.514L12 16L5.515 9.515L6.929 8.1L11 12.17V2H13V12.172Z"/></svg>
+                    <span>Drop image here or click to browse</span>
+                    <span class="editor-image-drop-hint">JPEG · PNG · GIF · WebP</span>
+                  </div>
+                  <img id="image-preview-thumb" alt="Recipe image preview" style="display:none" />
+                  <div class="editor-image-drop-overlay" id="image-drop-overlay"></div>
+                </div>
+                <input type="file" id="image-file-input" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="editorImageFileSelected(event)" />
+                <div class="editor-image-url-row">
+                  <input class="editor-input editor-input--sm" id="recipe-image" type="url" placeholder="or paste image URL…" oninput="editorSync()" />
+                  <button class="editor-btn editor-btn--icon editor-btn--danger" onclick="editorClearImage(event)" title="Clear image">×</button>
+                </div>
+                <p class="editor-image-upload-error" id="image-upload-error" aria-live="polite"></p>
               </div>
             </section>
 
@@ -214,7 +234,82 @@
       state.name        = document.getElementById("recipe-name").value;
       state.description = document.getElementById("recipe-desc").value;
       state.image       = document.getElementById("recipe-image").value;
+      updateImageDropZone();
       renderPreview();
+    }
+
+    // ── Image upload ────────────────────────────────────────────────────────
+
+    function updateImageDropZone() {
+      var thumb   = document.getElementById("image-preview-thumb");
+      var content = document.getElementById("image-drop-content");
+      if (state.image) {
+        thumb.src = state.image;
+        thumb.style.display = "block";
+        content.style.display = "none";
+      } else {
+        thumb.style.display = "none";
+        content.style.display = "flex";
+      }
+    }
+
+    function editorImageDragOver(e) {
+      e.preventDefault();
+      document.getElementById("image-drop-zone").classList.add("drag-over");
+    }
+
+    function editorImageDragLeave(e) {
+      document.getElementById("image-drop-zone").classList.remove("drag-over");
+    }
+
+    function editorImageDrop(e) {
+      e.preventDefault();
+      document.getElementById("image-drop-zone").classList.remove("drag-over");
+      var files = e.dataTransfer.files;
+      if (files.length) editorUploadImage(files[0]);
+    }
+
+    function editorImageFileSelected(e) {
+      var file = e.target.files[0];
+      if (file) editorUploadImage(file);
+      // Reset so selecting the same file again re-triggers onchange
+      e.target.value = "";
+    }
+
+    function editorUploadImage(file) {
+      var zone    = document.getElementById("image-drop-zone");
+      var errEl   = document.getElementById("image-upload-error");
+      var overlay = document.getElementById("image-drop-overlay");
+      errEl.textContent = "";
+      zone.classList.add("uploading");
+      overlay.textContent = "Uploading…";
+
+      var fd = new FormData();
+      fd.append("image", file);
+
+      fetch("/api/images/upload", { method: "POST", body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          zone.classList.remove("uploading");
+          overlay.textContent = "";
+          if (data.url) {
+            document.getElementById("recipe-image").value = data.url;
+            editorSync();
+          } else {
+            errEl.textContent = data.error || "Upload failed.";
+          }
+        })
+        .catch(function() {
+          zone.classList.remove("uploading");
+          overlay.textContent = "";
+          errEl.textContent = "Upload failed. Please check your connection.";
+        });
+    }
+
+    function editorClearImage(e) {
+      e.stopPropagation(); // prevent the drop-zone click handler from firing
+      document.getElementById("recipe-image").value = "";
+      editorSync();
     }
 
     // ── Boards ─────────────────────────────────────────────────────────────
@@ -647,6 +742,7 @@
       document.getElementById("recipe-name").value  = state.name;
       document.getElementById("recipe-desc").value  = state.description;
       document.getElementById("recipe-image").value = state.image;
+      updateImageDropZone();
       renderBoardChips();
       renderTagsList();
       renderSectionsList();
@@ -748,6 +844,7 @@
     renderBoardChips();
     renderTagsList();
     renderSectionsList();
+    updateImageDropZone();
     renderPreview();
     </script>
   </body>

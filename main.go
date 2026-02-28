@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +16,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+// uploadsDir is where recipe images uploaded via the editor are persisted.
+const uploadsDir = "static/uploads"
 
 // ─── Config ─────────────────────────────────────────────────────────────────
 
@@ -226,6 +231,63 @@ func fetchProduct(id string) (*Product, error) {
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
+// handleImageUpload accepts a multipart image upload, saves it under
+// static/uploads/, and returns the public URL as JSON.
+// POST /api/images/upload  (field name: "image")
+func handleImageUpload(c *gin.Context) {
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no image provided"})
+		return
+	}
+
+	// Open and read the first 512 bytes to detect the actual content type.
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read image"})
+		return
+	}
+	defer src.Close()
+
+	header := make([]byte, 512)
+	n, err := src.Read(header)
+	if err != nil && err != io.EOF {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read image"})
+		return
+	}
+	ct := http.DetectContentType(header[:n])
+
+	extMap := map[string]string{
+		"image/jpeg": ".jpg",
+		"image/png":  ".png",
+		"image/gif":  ".gif",
+		"image/webp": ".webp",
+	}
+	ext, ok := extMap[ct]
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported image type; use JPEG, PNG, GIF or WebP"})
+		return
+	}
+
+	if err := os.MkdirAll(uploadsDir, 0o755); err != nil {
+		log.Printf("handleImageUpload: mkdir %s: %v", uploadsDir, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "storage error"})
+		return
+	}
+
+	// Combine timestamp + random uint32 to avoid collisions under concurrency.
+	filename := fmt.Sprintf("%d_%08x%s", time.Now().UnixNano(), rand.Uint32(), ext)
+	dst := filepath.Join(uploadsDir, filename)
+
+	if err := c.SaveUploadedFile(file, dst); err != nil {
+		log.Printf("handleImageUpload: save %s: %v", dst, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save image"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"url": "/static/uploads/" + filename})
+}
+
 func handleRecipeEditor(c *gin.Context) {
 	c.HTML(http.StatusOK, "recipe_editor", nil)
 }
@@ -323,6 +385,7 @@ func renderError(c *gin.Context, status int, title, message string) {
 
 func main() {
 	router := gin.Default()
+	router.MaxMultipartMemory = 10 << 20 // 10 MB max upload
 	router.SetHTMLTemplate(loadTemplates())
 	router.Static("/static", "./static")
 
@@ -331,6 +394,7 @@ func main() {
 	router.GET("/recipes/:id", handleRecipe)
 	router.GET("/products/:id", handleProduct)
 	router.GET("/privacy-policy", handlePrivacyPolicy)
+	router.POST("/api/images/upload", handleImageUpload)
 
 	// Dev-only: preview the recipe/product pages with local example data.
 	if gin.Mode() != gin.ReleaseMode {
