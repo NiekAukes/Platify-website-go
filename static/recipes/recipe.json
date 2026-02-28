@@ -1,0 +1,142 @@
+{
+  "recipe": {
+    "id": "sample-1",
+    "name": "Mushroom Risotto with Parsley",
+    "description": "A creamy Italian classic with earthy mushrooms and fresh parsley. Comfort food at its finest.",
+    "image": "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=600&q=80",
+    "boards": ["Italian"],
+    "tags": [
+      { "name": "Vegetarian", "lightColor": "#558b2f", "darkColor": "#8EAD70" },
+      { "name": "Quick", "lightColor": "#2e8b57", "darkColor": "#5EBA6E" }
+    ],
+    "sections": [
+      {
+        "title": "Ingredients",
+        "ingredients": [
+          { "name": "Arborio rice", "quantity": "300", "unit": "g" },
+          { "name": "Mushrooms (mixed)", "quantity": "250", "unit": "g" },
+          { "name": "Onion", "quantity": "1", "unit": "medium" },
+          { "name": "Garlic cloves", "quantity": "2", "unit": "" },
+          { "name": "Vegetable broth", "quantity": "1", "unit": "L" },
+          { "name": "White wine", "quantity": "100", "unit": "ml" },
+          { "name": "Parmesan cheese", "quantity": "60", "unit": "g" },
+          { "name": "Fresh parsley", "quantity": "1", "unit": "bunch" },
+          { "name": "Butter", "quantity": "30", "unit": "g" },
+          { "name": "Olive oil", "quantity": "2", "unit": "tbsp" }
+        ]
+      },
+      {
+        "title": "Nutrition",
+        "items": [
+          {
+            "name": "Arborio rice",
+            "quantity": 300,
+            "unit": "g",
+            "nutrients": {
+              "energy": 1044,
+              "carbs": 231,
+              "proteins": 20.1,
+              "fats": 2.4
+            }
+          },
+          {
+            "name": "Mushrooms",
+            "quantity": 250,
+            "unit": "g",
+            "nutrients": {
+              "energy": 55,
+              "carbs": 8.3,
+              "proteins": 7.7,
+              "fats": 0.8
+            }
+          },
+          {
+            "name": "Onion",
+            "quantity": 110,
+            "unit": "g",
+            "nutrients": {
+              "energy": 44,
+              "carbs": 10.2,
+              "proteins": 1.2,
+              "fats": 0.1
+            }
+          },
+          {
+            "name": "Parmesan cheese",
+            "quantity": 60,
+            "unit": "g",
+            "nutrients": {
+              "energy": 247,
+              "carbs": 2.2,
+              "proteins": 21.6,
+              "fats": 17.1
+            }
+          },
+          {
+            "name": "Butter",
+            "quantity": 30,
+            "unit": "g",
+            "nutrients": {
+              "energy": 216,
+              "carbs": 0,
+              "proteins": 0.3,
+              "fats": 24.3
+            }
+          },
+          {
+            "name": "Olive oil",
+            "quantity": 27,
+            "unit": "ml",
+            "nutrients": {
+              "energy": 239,
+              "carbs": 0,
+              "proteins": 0,
+              "fats": 27
+            }
+          },
+          {
+            "name": "White wine",
+            "quantity": 100,
+            "unit": "ml",
+            "nutrients": {
+              "energy": 82,
+              "carbs": 2.6,
+              "proteins": 0.1,
+              "fats": 0
+            }
+          }
+        ]
+      },
+      {
+        "title": "Directions",
+        "directions": [
+          {
+            "heading": "Prep",
+            "text": "Dice the onion, mince garlic, slice mushrooms, and warm the broth in a separate pan."
+          },
+          {
+            "text": "Heat olive oil in a large pan over medium heat. Sauté onion until translucent, about 3 minutes."
+          },
+          {
+            "text": "Add garlic and mushrooms, cook until the mushrooms release their liquid and turn golden — roughly 5 minutes."
+          },
+          {
+            "text": "Add the rice and toast for 1 minute, stirring constantly."
+          },
+          { "text": "Pour in the white wine and stir until absorbed." },
+          {
+            "text": "Add warm broth one ladle at a time, stirring frequently, waiting until each addition is mostly absorbed before adding the next. This takes about 18-20 minutes."
+          },
+          {
+            "heading": "Finish",
+            "text": "Remove from heat, stir in butter and grated Parmesan. Season with salt and pepper. Garnish with fresh parsley."
+          }
+        ]
+      },
+      {
+        "title": "Recipe Video",
+        "videoLink": "https://www.youtube.com/embed/bb1GohjaYPk?si=SqpRNQEEJagVYdJM"
+      }
+    ]
+  }
+}

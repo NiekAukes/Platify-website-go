@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Platify – Recipe</title>
+    <style>
+      /* ── Reset ─────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* ── Theme variables ───────────────────────────────── */
+      :root {
+        --primary: #333333;
+        --on-primary: #ffffff;
+        --background: #ffffff;
+        --dark-gray: #666666;
+        --border: #e0e0e0;
+        --text: #333333;
+        --primary-shadow: #f0f0f0;
+        --header-bg: #e0e0e0;
+        --delete: #bc5839;
+        --info: #496a6d;
+        --card-radius: 20px;
+        --board-chip-bg: #f0f0f0;
+        --board-chip-text: #333333;
+        --overlay: rgba(0, 0, 0, 0.04);
+        --macro-calories: #3a3a3a;
+        --macro-carbs: #8ead70;
+        --macro-protein: #81b2d0;
+        --macro-fat: #cda462;
+      }
+
+      [data-theme="dark"] {
+        --primary: #ffffff;
+        --on-primary: #333333;
+        --background: #141414;
+        --dark-gray: #cccccc;
+        --border: #3c3c3c;
+        --text: #ffffff;
+        --primary-shadow: #505050;
+        --header-bg: #3c3c3c;
+        --delete: #bc5839;
+        --info: #496a6d;
+        --board-chip-bg: #333333;
+        --board-chip-text: #ffffff;
+        --overlay: rgba(255, 255, 255, 0.04);
+        --macro-calories: #aaaaaa;
+        --macro-carbs: #8ead70;
+        --macro-protein: #81b2d0;
+        --macro-fat: #cda462;
+      }
+
+      /* ── Base ───────────────────────────────────────────── */
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background: var(--background);
+        color: var(--text);
+        transition:
+          background 0.25s,
+          color 0.25s;
+        overflow-x: hidden;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* ── Detail page ───────────────────────────────────── */
+      .detail-page {
+        min-height: 100vh;
+      }
+
+      .detail-hero {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      .detail-hero img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        display: block;
+        background: var(--primary-shadow);
+      }
+      .detail-hero .gradient {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 40%;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.65) 0%,
+          rgba(0, 0, 0, 0) 100%
+        );
+        pointer-events: none;
+      }
+      .detail-nav {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        display: flex;
+        justify-content: flex-end;
+        z-index: 10;
+      }
+      .detail-nav button {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.35);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.15s;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+      .detail-nav button:hover {
+        opacity: 0.8;
+      }
+
+      .detail-body {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px 25px 100px;
+      }
+      .detail-body h1 {
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 8px;
+      }
+      .detail-body .description {
+        margin-top: 16px;
+        font-size: 15px;
+        line-height: 1.55;
+        color: var(--dark-gray);
+      }
+
+      /* ── Tags / chips ──────────────────────────────────── */
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .tag-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+      .tag-chip.board {
+        background: var(--board-chip-bg);
+        color: var(--primary);
+      }
+      .tag-chip.board svg {
+        width: 16px;
+        height: 16px;
+        stroke: var(--primary);
+        fill: none;
+        stroke-width: 2;
+      }
+      .tag-chip.colored {
+        border: 1px solid var(--chip-color, #888);
+        color: var(--chip-color, #888);
+        background: transparent;
+      }
+      .tag-chip.colored .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--chip-color, #888);
+      }
+
+      /* ── Sections ───────────────────────────────────────── */
+      .recipe-section {
+        margin-top: 28px;
+      }
+      .recipe-section h2 {
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      /* ── Directions ─────────────────────────────────────── */
+      .direction-step {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      .step-number {
+        flex: 0 0 32px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: var(--on-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .step-heading {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .step-text {
+        font-size: 15px;
+        line-height: 1.55;
+        color: var(--dark-gray);
+      }
+
+      /* ── Ingredients ────────────────────────────────────── */
+      .ingredient-item {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 15px;
+      }
+      .ingredient-item:last-child {
+        border-bottom: none;
+      }
+      .ingredient-qty {
+        font-weight: 600;
+        white-space: nowrap;
+        min-width: 70px;
+      }
+      .ingredient-name {
+        flex: 1;
+      }
+
+      /* ── Nutrition ──────────────────────────────────────── */
+      .nutrition-summary {
+        margin-bottom: 18px;
+      }
+      .nutrition-summary .energy-line {
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .nutrition-summary .energy-label {
+        color: var(--dark-gray);
+      }
+      .nutrition-summary .energy-value {
+        font-weight: 600;
+      }
+      .nutrition-summary .macros-line {
+        font-size: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: baseline;
+      }
+      .macro-label {
+        color: var(--dark-gray);
+      }
+      .macro-value {
+        font-weight: 600;
+      }
+      .macro-sep {
+        color: var(--dark-gray);
+        margin: 0 4px;
+      }
+
+      .nutrition-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .nutrition-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .nutrition-bar-label {
+        font-size: 13px;
+        font-weight: 600;
+        min-width: 64px;
+        text-align: right;
+      }
+      .nutrition-bar-track {
+        flex: 1;
+        height: 10px;
+        border-radius: 5px;
+        background: var(--primary-shadow);
+        overflow: hidden;
+      }
+      .nutrition-bar-fill {
+        height: 100%;
+        border-radius: 5px;
+        transition: width 0.4s ease;
+      }
+      .nutrition-bar-amount {
+        font-size: 13px;
+        color: var(--dark-gray);
+        min-width: 44px;
+      }
+
+      /* Per-item nutrition table */
+      .nutrition-items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+      }
+      .nutrition-items th {
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: var(--dark-gray);
+        padding: 6px 8px;
+        border-bottom: 2px solid var(--border);
+      }
+      .nutrition-items th:not(:first-child) {
+        text-align: right;
+      }
+      .nutrition-items td {
+        font-size: 14px;
+        padding: 8px 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      .nutrition-items td:not(:first-child) {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        color: var(--dark-gray);
+      }
+      .nutrition-items tr:last-child td {
+        border-bottom: none;
+      }
+      .nutrition-items .item-thumb {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        object-fit: cover;
+        vertical-align: middle;
+        margin-right: 8px;
+        background: var(--primary-shadow);
+      }
+
+      /* ── Video embed ────────────────────────────────────── */
+      .video-container {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #000;
+      }
+      .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+
+      /* ── Shopping list ──────────────────────────────────── */
+      .shopping-item {
+        padding: 8px 0;
+        font-size: 15px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .shopping-item:last-child {
+        border-bottom: none;
+      }
+      .shopping-check {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border: 2px solid var(--border);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .shopping-check.checked {
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+      .shopping-check.checked::after {
+        content: "✓";
+        color: var(--on-primary);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      /* ── Loading spinner ────────────────────────────────── */
+      .spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 20px;
+      }
+      .spinner::after {
+        content: "";
+        width: 36px;
+        height: 36px;
+        border: 3px solid var(--border);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ── Error state ────────────────────────────────────── */
+      .error-state {
+        text-align: center;
+        padding: 80px 24px;
+        color: var(--dark-gray);
+      }
+      .error-state h2 {
+        font-size: 22px;
+        margin-bottom: 8px;
+        color: var(--text);
+      }
+      .error-state p {
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      /* ── Branding footer ────────────────────────────────── */
+      .platify-footer {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 25px 40px;
+        text-align: center;
+      }
+      .platify-footer .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 12px;
+        background: var(--primary-shadow);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: opacity 0.15s;
+      }
+      .platify-footer .badge:hover {
+        opacity: 0.75;
+      }
+      .platify-footer .badge img {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* ── Placeholder image ──────────────────────────────── */
+      .placeholder-img {
+        background: var(--primary-shadow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* ── Responsive ─────────────────────────────────────── */
+      @media (max-width: 480px) {
+        .detail-body {
+          padding: 16px 16px 80px;
+        }
+        .platify-footer {
+          padding: 0 16px 40px;
+        }
+        .nutrition-items {
+          font-size: 13px;
+        }
+        .nutrition-items th,
+        .nutrition-items td {
+          padding: 6px 4px;
+        }
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script>
+      /* ─── SVG helpers ─────────────────────────────── */
+      const SVG_STACK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`;
+
+      /* ─── Theme ───────────────────────────────────── */
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+      let darkMode = prefersDark;
+      applyTheme();
+      function applyTheme() {
+        document.documentElement.setAttribute(
+          "data-theme",
+          darkMode ? "dark" : "light",
+        );
+      }
+
+      /*
+       * ── JSON format ──────────────────────────────────
+       *
+       * A single shared recipe. Loaded from:
+       *   1. ?data=<base64 JSON>  query parameter
+       *   2. ?id=<recipeId>       → fetches ./<id>.json
+       *   3. ./recipe.json        in the same directory
+       *   4. Embedded sample data (fallback)
+       *
+       * {
+       *   "recipe": {
+       *     "id": "string",
+       *     "name": "string",
+       *     "description?": "string",
+       *     "image?": "url",
+       *     "boards?": ["string"],                 // board names the recipe belongs to
+       *     "tags?": [                              // colored tag chips
+       *       { "name": "string", "lightColor": "#hex", "darkColor": "#hex" }
+       *     ],
+       *     "sections?": [
+       *       {
+       *         "title": "Ingredients",             // simple ingredient list
+       *         "ingredients": [
+       *           { "name": "string", "quantity?": "string", "unit?": "string" }
+       *         ]
+       *       },
+       *       {
+       *         "title": "Nutrition",               // nutritional items with macros
+       *         "items": [
+       *           {
+       *             "name": "string",
+       *             "thumbnail?": "url",
+       *             "quantity": 100,
+       *             "unit": "g",
+       *             "nutrients": {
+       *               "energy": 200,                // kcal
+       *               "carbs": 30,                  // grams
+       *               "proteins": 8,                // grams
+       *               "fats": 5                     // grams
+       *             }
+       *           }
+       *         ]
+       *       },
+       *       {
+       *         "title": "Directions",
+       *         "directions": [{ "heading?": "string", "text": "string" }]
+       *       },
+       *       {
+       *         "title": "Recipe Video",
+       *         "videoLink": "url"
+       *       },
+       *       {
+       *         "title": "Shopping List",
+       *         "list": [{ "name": "string" }]
+       *       }
+       *     ]
+       *   }
+       * }
+       */
+
+      /* ─── Data fetching ──────────────────────────── */
+      async function init() {
+        const app = document.getElementById("app");
+        app.innerHTML = '<div class="spinner"></div>';
+
+        const params = new URLSearchParams(location.search);
+        let recipe = null;
+
+        // 1. base64-encoded recipe in ?data=
+        const recipeData = params.get("data");
+        if (recipeData) {
+          try {
+            const parsed = JSON.parse(atob(recipeData));
+            recipe = parsed.recipe || parsed;
+          } catch {}
+        }
+
+        // 2. recipe id in ?id= → fetch ./<id>.json
+        if (!recipe) {
+          const recipeId = params.get("id");
+          if (recipeId) {
+            try {
+              const res = await fetch(`./${encodeURIComponent(recipeId)}.json`);
+              if (res.ok) {
+                const j = await res.json();
+                recipe = j.recipe || j;
+              }
+            } catch {}
+          }
+        }
+
+        // 3. ./recipe.json
+        if (!recipe) {
+          try {
+            const res = await fetch("./recipe.json");
+            if (res.ok) {
+              const j = await res.json();
+              recipe = j.recipe || j;
+            }
+          } catch {}
+        }
+
+        // 4. fallback sample
+        if (!recipe) recipe = sampleRecipe();
+
+        renderRecipe(recipe);
+      }
+
+      /* ─── Sample recipe (fallback) ───────────────── */
+      function sampleRecipe() {
+        return {
+          id: "sample-1",
+          name: "Mushroom Risotto with Parsley",
+          description:
+            "A creamy Italian classic with earthy mushrooms and fresh parsley. Comfort food at its finest.",
+          image:
+            "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=600&q=80",
+          boards: ["Italian"],
+          tags: [
+            { name: "Vegetarian", lightColor: "#558b2f", darkColor: "#8EAD70" },
+            { name: "Quick", lightColor: "#2e8b57", darkColor: "#5EBA6E" },
+          ],
+          sections: [
+            {
+              title: "Ingredients",
+              ingredients: [
+                { name: "Arborio rice", quantity: "300", unit: "g" },
+                { name: "Mushrooms (mixed)", quantity: "250", unit: "g" },
+                { name: "Onion", quantity: "1", unit: "medium" },
+                { name: "Garlic cloves", quantity: "2", unit: "" },
+                { name: "Vegetable broth", quantity: "1", unit: "L" },
+                { name: "White wine", quantity: "100", unit: "ml" },
+                { name: "Parmesan cheese", quantity: "60", unit: "g" },
+                { name: "Fresh parsley", quantity: "1", unit: "bunch" },
+                { name: "Butter", quantity: "30", unit: "g" },
+                { name: "Olive oil", quantity: "2", unit: "tbsp" },
+              ],
+            },
+            {
+              title: "Nutrition",
+              items: [
+                {
+                  name: "Arborio rice",
+                  quantity: 300,
+                  unit: "g",
+                  nutrients: {
+                    energy: 1044,
+                    carbs: 231,
+                    proteins: 20.1,
+                    fats: 2.4,
+                  },
+                },
+                {
+                  name: "Mushrooms",
+                  quantity: 250,
+                  unit: "g",
+                  nutrients: {
+                    energy: 55,
+                    carbs: 8.3,
+                    proteins: 7.7,
+                    fats: 0.8,
+                  },
+                },
+                {
+                  name: "Onion",
+                  quantity: 110,
+                  unit: "g",
+                  nutrients: {
+                    energy: 44,
+                    carbs: 10.2,
+                    proteins: 1.2,
+                    fats: 0.1,
+                  },
+                },
+                {
+                  name: "Parmesan cheese",
+                  quantity: 60,
+                  unit: "g",
+                  nutrients: {
+                    energy: 247,
+                    carbs: 2.2,
+                    proteins: 21.6,
+                    fats: 17.1,
+                  },
+                },
+                {
+                  name: "Butter",
+                  quantity: 30,
+                  unit: "g",
+                  nutrients: {
+                    energy: 216,
+                    carbs: 0,
+                    proteins: 0.3,
+                    fats: 24.3,
+                  },
+                },
+                {
+                  name: "Olive oil",
+                  quantity: 27,
+                  unit: "ml",
+                  nutrients: { energy: 239, carbs: 0, proteins: 0, fats: 27 },
+                },
+                {
+                  name: "White wine",
+                  quantity: 100,
+                  unit: "ml",
+                  nutrients: { energy: 82, carbs: 2.6, proteins: 0.1, fats: 0 },
+                },
+              ],
+            },
+            {
+              title: "Directions",
+              directions: [
+                {
+                  heading: "Prep",
+                  text: "Dice the onion, mince garlic, slice mushrooms, and warm the broth in a separate pan.",
+                },
+                {
+                  text: "Heat olive oil in a large pan over medium heat. Sauté onion until translucent, about 3 minutes.",
+                },
+                {
+                  text: "Add garlic and mushrooms, cook until the mushrooms release their liquid and turn golden — roughly 5 minutes.",
+                },
+                {
+                  text: "Add the rice and toast for 1 minute, stirring constantly.",
+                },
+                { text: "Pour in the white wine and stir until absorbed." },
+                {
+                  text: "Add warm broth one ladle at a time, stirring frequently, waiting until each addition is mostly absorbed before adding the next. This takes about 18-20 minutes.",
+                },
+                {
+                  heading: "Finish",
+                  text: "Remove from heat, stir in butter and grated Parmesan. Season with salt and pepper. Garnish with fresh parsley.",
+                },
+              ],
+            },
+            {
+              title: "Recipe Video",
+              videoLink: "https://www.youtube.com/embed/BrIg4xaXVCo",
+            },
+          ],
+        };
+      }
+
+      /* ─── Render single recipe ───────────────────── */
+      function renderRecipe(recipe) {
+        const app = document.getElementById("app");
+        app.innerHTML = "";
+
+        document.title = `${recipe.name} – Platify`;
+
+        const page = el("div", "detail-page");
+
+        // Hero image
+        const hero = el("div", "detail-hero");
+        hero.appendChild(el("div", "gradient"));
+
+        const nav = el("div", "detail-nav");
+        const themeBtn = document.createElement("button");
+        themeBtn.innerHTML = "◑";
+        themeBtn.title = "Toggle theme";
+        themeBtn.addEventListener("click", () => {
+          darkMode = !darkMode;
+          applyTheme();
+          renderRecipe(recipe);
+        });
+        nav.appendChild(themeBtn);
+        hero.appendChild(nav);
+
+        if (recipe.image) {
+          const img = document.createElement("img");
+          img.src = recipe.image;
+          img.alt = recipe.name;
+          hero.appendChild(img);
+        } else {
+          const ph = el("div", "placeholder-img");
+          ph.style.cssText = "width:100%;aspect-ratio:1";
+          ph.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;opacity:.3"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2M7 2v20M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3m0-10v10"/></svg>`;
+          hero.appendChild(ph);
+        }
+        page.appendChild(hero);
+
+        // Body
+        const body = el("div", "detail-body");
+        body.appendChild(elText("h1", recipe.name));
+
+        const tagList = buildTagList(recipe);
+        if (tagList.childElementCount) {
+          tagList.style.marginBottom = "8px";
+          body.appendChild(tagList);
+        }
+
+        if (recipe.description)
+          body.appendChild(elText("p", recipe.description, "description"));
+
+        if (recipe.sections) {
+          for (const section of recipe.sections)
+            body.appendChild(buildSection(section));
+        }
+
+        page.appendChild(body);
+        app.appendChild(page);
+
+        // Footer
+        const footer = el("div", "platify-footer");
+        const badge = document.createElement("a");
+        badge.className = "badge";
+        badge.href = "../";
+        const logo = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21 2V22H19V14H16V7C16 4.23858 18.2386 2 21 2ZM9 13.9V22H7V13.9C4.71776 13.4367 3 11.419 3 9V3H5V10H7V3H9V10H11V3H13V9C13 11.419 11.2822 13.4367 9 13.9Z"></path></svg>`;
+        badge.innerHTML = `${logo} Shared from Platify`;
+        footer.appendChild(badge);
+        app.appendChild(footer);
+      }
+
+      /* ─── Tag list builder ───────────────────────── */
+      function buildTagList(recipe) {
+        const list = el("div", "tag-list");
+        for (const b of recipe.boards || []) {
+          const chip = el("span", "tag-chip board");
+          chip.innerHTML = SVG_STACK;
+          chip.appendChild(document.createTextNode(" " + b));
+          list.appendChild(chip);
+        }
+        for (const t of recipe.tags || []) {
+          const color =
+            typeof t === "string"
+              ? "#888"
+              : (darkMode ? t.darkColor : t.lightColor) || "#888";
+          const name = typeof t === "string" ? t : t.name;
+          const chip = el("span", "tag-chip colored");
+          chip.style.setProperty("--chip-color", color);
+          chip.appendChild(el("span", "dot"));
+          chip.appendChild(document.createTextNode(" " + name));
+          list.appendChild(chip);
+        }
+        return list;
+      }
+
+      /* ─── Build a recipe section ─────────────────── */
+      function buildSection(section) {
+        const wrap = el("div", "recipe-section");
+
+        // ── Ingredients ──
+        if (section.title === "Ingredients" && section.ingredients) {
+          wrap.appendChild(elText("h2", "Ingredients"));
+          for (const ing of section.ingredients) {
+            const row = el("div", "ingredient-item");
+            const qty = [ing.quantity, ing.unit]
+              .filter(Boolean)
+              .join(" ")
+              .trim();
+            if (qty) row.appendChild(elText("span", qty, "ingredient-qty"));
+            row.appendChild(elText("span", ing.name, "ingredient-name"));
+            wrap.appendChild(row);
+          }
+        }
+
+        // ── Nutrition ──
+        if (section.title === "Nutrition" && section.items) {
+          wrap.appendChild(elText("h2", "Nutrition"));
+
+          const totals = { energy: 0, carbs: 0, proteins: 0, fats: 0 };
+          for (const item of section.items) {
+            totals.energy += item.nutrients.energy;
+            totals.carbs += item.nutrients.carbs;
+            totals.proteins += item.nutrients.proteins;
+            totals.fats += item.nutrients.fats;
+          }
+
+          // Summary line (matches app's CollectionNutrients)
+          const summary = el("div", "nutrition-summary");
+          const eLine = el("div", "energy-line");
+          eLine.innerHTML = `<span class="energy-label">Energy</span> <span class="energy-value">${Math.round(totals.energy)} kcal</span>`;
+          summary.appendChild(eLine);
+          const mLine = el("div", "macros-line");
+          mLine.innerHTML =
+            `<span class="macro-label">Carbs</span> <span class="macro-value">${Math.round(totals.carbs)}g</span>` +
+            `<span class="macro-sep">•</span>` +
+            `<span class="macro-label">Protein</span> <span class="macro-value">${Math.round(totals.proteins)}g</span>` +
+            `<span class="macro-sep">•</span>` +
+            `<span class="macro-label">Fat</span> <span class="macro-value">${Math.round(totals.fats)}g</span>`;
+          summary.appendChild(mLine);
+          wrap.appendChild(summary);
+
+          // Macro bars
+          const maxG = Math.max(totals.carbs, totals.proteins, totals.fats, 1);
+          const bars = el("div", "nutrition-bars");
+          for (const m of [
+            {
+              label: "Carbs",
+              value: totals.carbs,
+              color: "var(--macro-carbs)",
+            },
+            {
+              label: "Protein",
+              value: totals.proteins,
+              color: "var(--macro-protein)",
+            },
+            { label: "Fat", value: totals.fats, color: "var(--macro-fat)" },
+          ]) {
+            const row = el("div", "nutrition-bar-row");
+            row.appendChild(elText("span", m.label, "nutrition-bar-label"));
+            const track = el("div", "nutrition-bar-track");
+            const fill = el("div", "nutrition-bar-fill");
+            fill.style.width = `${(m.value / maxG) * 100}%`;
+            fill.style.background = m.color;
+            track.appendChild(fill);
+            row.appendChild(track);
+            row.appendChild(
+              elText("span", `${Math.round(m.value)}g`, "nutrition-bar-amount"),
+            );
+            bars.appendChild(row);
+          }
+          wrap.appendChild(bars);
+
+          // Per-item table (only when multiple items)
+          if (section.items.length > 1) {
+            const table = document.createElement("table");
+            table.className = "nutrition-items";
+            const thead = document.createElement("thead");
+            thead.innerHTML =
+              "<tr><th>Item</th><th>Qty</th><th>kcal</th><th>C</th><th>P</th><th>F</th></tr>";
+            table.appendChild(thead);
+            const tbody = document.createElement("tbody");
+            for (const item of section.items) {
+              const tr = document.createElement("tr");
+              const nameCell = document.createElement("td");
+              if (item.thumbnail) {
+                const thumb = document.createElement("img");
+                thumb.src = item.thumbnail;
+                thumb.className = "item-thumb";
+                thumb.alt = "";
+                nameCell.appendChild(thumb);
+              }
+              nameCell.appendChild(document.createTextNode(item.name));
+              tr.appendChild(nameCell);
+              tr.appendChild(
+                tdText(`${item.quantity}${item.unit ? " " + item.unit : ""}`),
+              );
+              tr.appendChild(tdText(Math.round(item.nutrients.energy)));
+              tr.appendChild(tdText(Math.round(item.nutrients.carbs) + "g"));
+              tr.appendChild(tdText(Math.round(item.nutrients.proteins) + "g"));
+              tr.appendChild(tdText(Math.round(item.nutrients.fats) + "g"));
+              tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);
+            wrap.appendChild(table);
+          }
+        }
+
+        // ── Directions ──
+        if (section.title === "Directions" && section.directions) {
+          wrap.appendChild(elText("h2", "Directions"));
+          let step = 1;
+          for (const d of section.directions) {
+            const row = el("div", "direction-step");
+            row.appendChild(elText("div", String(step++), "step-number"));
+            const content = el("div");
+            if (d.heading)
+              content.appendChild(elText("div", d.heading, "step-heading"));
+            content.appendChild(elText("div", d.text, "step-text"));
+            row.appendChild(content);
+            wrap.appendChild(row);
+          }
+        }
+
+        // ── Video ──
+        if (section.title === "Recipe Video" && section.videoLink) {
+          wrap.appendChild(elText("h2", "Video"));
+          const vc = el("div", "video-container");
+          const iframe = document.createElement("iframe");
+          iframe.src = section.videoLink;
+          iframe.allow =
+            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+          iframe.allowFullscreen = true;
+          vc.appendChild(iframe);
+          wrap.appendChild(vc);
+        }
+
+        // ── Shopping List ──
+        if (section.title === "Shopping List" && section.list) {
+          wrap.appendChild(elText("h2", "Shopping List"));
+          for (const item of section.list) {
+            const row = el("div", "shopping-item");
+            const check = el("div", "shopping-check");
+            check.addEventListener("click", () =>
+              check.classList.toggle("checked"),
+            );
+            row.appendChild(check);
+            row.appendChild(elText("span", item.name));
+            wrap.appendChild(row);
+          }
+        }
+
+        return wrap;
+      }
+
+      /* ─── DOM helpers ────────────────────────────── */
+      function el(tag, cls) {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        return e;
+      }
+      function elText(tag, text, cls) {
+        const e = el(tag, cls);
+        e.textContent = text;
+        return e;
+      }
+      function tdText(text) {
+        const td = document.createElement("td");
+        td.textContent = String(text);
+        return td;
+      }
+
+      /* ─── Boot ───────────────────────────────────── */
+      init();
+    </script>
+  </body>
+</html>
