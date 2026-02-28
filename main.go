@@ -157,8 +157,8 @@ func fetchRecipe(id string) (*Recipe, error) {
 	return &rr.Recipe, nil
 }
 
-func fetchProducts() ([]Product, error) {
-	url := apiBase() + "/products"
+func fetchProduct(id string) (*Product, error) {
+	url := apiBase() + "/products/" + id
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -170,14 +170,17 @@ func fetchProducts() ([]Product, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
-	var products []Product
-	if err := json.NewDecoder(resp.Body).Decode(&products); err != nil {
+	var product Product
+	if err := json.NewDecoder(resp.Body).Decode(&product); err != nil {
 		return nil, err
 	}
-	return products, nil
+	return &product, nil
 }
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
@@ -216,15 +219,26 @@ func handleRecipe(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := fetchProducts()
-	if err != nil {
-		log.Printf("fetchProducts: %v", err)
-		renderError(w, http.StatusInternalServerError, "Could not load products", "The product list could not be loaded. Please try again later.")
+func handleProduct(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/products/")
+	id = path.Base(id)
+	if id == "" || id == "." || id == "/" {
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "products.html", products); err != nil {
+	product, err := fetchProduct(id)
+	if err != nil {
+		log.Printf("fetchProduct(%q): %v", id, err)
+		renderError(w, http.StatusInternalServerError, "Could not load product", "The product could not be loaded. Please try again later.")
+		return
+	}
+	if product == nil {
+		renderError(w, http.StatusNotFound, "Product not found", "This product does not exist or is no longer available.")
+		return
+	}
+
+	if err := templates.ExecuteTemplate(w, "product.html", product); err != nil {
 		log.Printf("template error: %v", err)
 	}
 }
@@ -253,7 +267,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handleHome)
 	mux.HandleFunc("/recipes/", handleRecipe)
-	mux.HandleFunc("/products", handleProducts)
+	mux.HandleFunc("/products/", handleProduct)
 	mux.HandleFunc("/privacy-policy", handlePrivacyPolicy)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
