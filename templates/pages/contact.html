@@ -1,0 +1,63 @@
+{{/* contact – Contact page with ways to reach the team. Input: none */}}
+{{define "contact"}}
+<!doctype html>
+<html lang="en">
+  {{template "head" "Contact – Platify"}}
+  <body>
+    {{template "header"}}
+
+    <section class="info-hero">
+      <h1>Get in Touch</h1>
+      <p>Have a question, suggestion, or just want to say hi?</p>
+    </section>
+
+    <div class="info-container">
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="contact-icon">
+            <i class="ri-mail-line"></i>
+          </div>
+          <h3>Email</h3>
+          <p>For general enquiries, feedback, or support requests.</p>
+          <a href="mailto:support@platify.eu" class="contact-link"
+            >support@platify.eu</a
+          >
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-icon">
+            <i class="ri-github-fill"></i>
+          </div>
+          <h3>GitHub</h3>
+          <p>Found a bug or have a feature request? Open an issue.</p>
+          <a
+            href="https://github.com/NiekAukes"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="contact-link"
+            >github.com/NiekAukes</a
+          >
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-icon">
+            <i class="ri-question-answer-line"></i>
+          </div>
+          <h3>FAQ</h3>
+          <p>Many common questions are already answered.</p>
+          <a href="/faq" class="contact-link">Read the FAQ</a>
+        </div>
+      </div>
+
+      <div class="contact-note">
+        <p>
+          We typically respond within 48 hours. For privacy-related requests,
+          please refer to our <a href="/privacy-policy">Privacy Policy</a>.
+        </p>
+      </div>
+    </div>
+
+    {{template "footer"}}
+  </body>
+</html>
+{{end}}

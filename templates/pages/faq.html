@@ -1,0 +1,215 @@
+{{/* faq – Frequently Asked Questions page. Input: none */}} {{define "faq"}}
+<!doctype html>
+<html lang="en">
+  {{template "head" "FAQ – Platify"}}
+  <body>
+    {{template "header"}}
+
+    <section class="info-hero">
+      <h1>Frequently Asked Questions</h1>
+      <p>Got questions? We've got answers.</p>
+    </section>
+
+    <div class="info-container">
+      <div class="faq-list">
+        <details class="faq-item" open>
+          <summary class="faq-question">What is Platify?</summary>
+          <div class="faq-answer">
+            <p>
+              Platify is a free mobile app that helps you manage recipes, track
+              nutrition, and build smart shopping lists — all in one place. It's
+              designed for home cooks who want to stay organised in the kitchen.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            Which platforms is Platify available on?
+          </summary>
+          <div class="faq-answer">
+            <p>
+              Platify is currently available on Android via the
+              <a
+                href="https://play.google.com/store/apps/details?id=eu.platify.app"
+                >Google Play Store</a
+              >. An iOS version is planned for the future.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">Is Platify free to use?</summary>
+          <div class="faq-answer">
+            <p>
+              Yes! Platify is completely free. There is an optional
+              <strong>Platify Premium</strong> upgrade that removes ads and
+              supports development, but all core features are available for
+              free.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">How do I add a recipe?</summary>
+          <div class="faq-answer">
+            <p>
+              Open the Recipes tab and tap the <strong>+</strong> button. You
+              can add a name, description, cover image, ingredients, directions,
+              and nutritional items. Recipes can also be organised into boards
+              and tagged for easy filtering.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">Can I track what I eat?</summary>
+          <div class="faq-answer">
+            <p>
+              Absolutely. The <strong>Records</strong> tab lets you log food
+              items from our product database. You can track daily calories,
+              carbs, protein, and fat against personalised nutrition goals.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">What is a Collection?</summary>
+          <div class="faq-answer">
+            <p>
+              A Collection groups multiple food products together — for example
+              "Breakfast" or "Post-Workout Snack". You can then quickly log the
+              entire collection to your diary in one tap.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            Can I scan barcodes to add products?
+          </summary>
+          <div class="faq-answer">
+            <p>
+              Yes. Platify includes a barcode scanner that lets you quickly look
+              up products and their nutritional information.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            Can I share recipes with friends?
+          </summary>
+          <div class="faq-answer">
+            <p>
+              Yes. Recipes can be shared via a simple link. The recipient can
+              view the recipe in their browser — no account or app installation
+              required.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">Is my data private?</summary>
+          <div class="faq-answer">
+            <p>
+              Your data is stored locally on your device by default. Recipes are
+              private unless you choose to share them. You can read more in our
+              <a href="/privacy-policy">Privacy Policy</a>.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            Can I export or back up my data?
+          </summary>
+          <div class="faq-answer">
+            <p>
+              Yes. Under Settings you'll find Data Export &amp; Import options.
+              You can export your local data and import it on another device.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            What does Platify Premium include?
+          </summary>
+          <div class="faq-answer">
+            <p>
+              Platify Premium removes all advertisements from the app. It's a
+              one-time purchase that also helps support ongoing development. All
+              core features remain free regardless.
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">How do I contact support?</summary>
+          <div class="faq-answer">
+            <p>
+              Head to our <a href="/contact">Contact page</a> for ways to reach
+              the team. We're happy to help with any questions or feedback.
+            </p>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    {{template "footer"}}
+
+    <script>
+      // Animate FAQ accordion open/close via grid-template-rows.
+      document.querySelectorAll(".faq-item").forEach(function (details) {
+        var summary = details.querySelector("summary");
+        var answer = details.querySelector(".faq-answer");
+        var animation = null;
+
+        summary.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (animation) animation.cancel();
+
+          if (details.open) {
+            // Closing
+            var startHeight = answer.offsetHeight;
+            answer.style.overflow = "hidden";
+            animation = answer.animate(
+              [
+                { height: startHeight + "px", paddingBottom: "20px" },
+                { height: "0px", paddingBottom: "0px" },
+              ],
+              { duration: 250, easing: "ease" },
+            );
+            animation.onfinish = function () {
+              details.open = false;
+              answer.style.overflow = "";
+              answer.style.height = "";
+              answer.style.paddingBottom = "";
+              animation = null;
+            };
+          } else {
+            // Opening
+            details.open = true;
+            var endHeight = answer.offsetHeight;
+            answer.style.overflow = "hidden";
+            animation = answer.animate(
+              [
+                { height: "0px", paddingBottom: "0px" },
+                { height: endHeight + "px", paddingBottom: "20px" },
+              ],
+              { duration: 250, easing: "ease" },
+            );
+            animation.onfinish = function () {
+              answer.style.overflow = "";
+              answer.style.height = "";
+              answer.style.paddingBottom = "";
+              animation = null;
+            };
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+{{end}}
