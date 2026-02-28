@@ -2,14 +2,44 @@
 {{define "header"}}
 <header class="site-header">
   <a href="/" class="logo">
-    <i class="ri-restaurant-line"></i>
+    <img src="/static/icons/platify2.svg" alt="Platify" class="logo-icon" />
     Platify
   </a>
-  <nav>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+    <i class="ri-menu-line nav-icon-show" id="nav-icon-open"></i>
+    <i class="ri-close-line nav-icon-hide" id="nav-icon-close"></i>
+  </button>
+  <nav id="nav-menu">
     <a href="/how-it-works">How It Works</a>
     <a href="/faq">FAQ</a>
     <a href="/contact">Contact</a>
     <a href="/privacy-policy">Privacy</a>
   </nav>
 </header>
+<script>
+  (function () {
+    var btn = document.getElementById("nav-toggle");
+    var nav = document.getElementById("nav-menu");
+    var iconOpen = document.getElementById("nav-icon-open");
+    var iconClose = document.getElementById("nav-icon-close");
+
+    function toggle(open) {
+      nav.classList.toggle("open", open);
+      iconOpen.classList.toggle("nav-icon-show", !open);
+      iconOpen.classList.toggle("nav-icon-hide", open);
+      iconClose.classList.toggle("nav-icon-show", open);
+      iconClose.classList.toggle("nav-icon-hide", !open);
+    }
+
+    btn.addEventListener("click", function () {
+      toggle(!nav.classList.contains("open"));
+    });
+
+    nav.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () {
+        toggle(false);
+      });
+    });
+  })();
+</script>
 {{end}}
