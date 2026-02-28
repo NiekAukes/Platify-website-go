@@ -1,0 +1,31 @@
+{{/* recipe – Shared recipe detail page. Input: Recipe struct */}} {{define
+"recipe"}}
+<!doctype html>
+<html lang="en">
+  {{template "head" (printf "%s – Platify" .Name)}}
+  <body>
+    <div class="detail-page">
+      {{template "hero-image" (dict "Src" .Image "Alt" .Name)}}
+
+      <div class="detail-body">
+        <h1>{{.Name}}</h1>
+
+        {{template "tag-list" (dict "Boards" .Boards "Tags" .Tags)}} {{if
+        .Description}}
+        <p class="description">{{.Description}}</p>
+        {{end}} {{range .Sections}} {{if and (eq .Title "Ingredients")
+        .Ingredients}} {{template "ingredients" .Ingredients}} {{else if and (eq
+        .Title "Nutrition") .Items}} {{template "nutrition-items-table" .Items}}
+        {{else if and (eq .Title "Directions") .Directions}} {{template
+        "directions" .Directions}} {{else if .VideoLink}} {{template
+        "video-embed" .}} {{else if .List}} {{template "shopping-list" .}}
+        {{else}}
+        <div class="recipe-section"><h2>{{.Title}}</h2></div>
+        {{end}} {{end}}
+      </div>
+    </div>
+
+    {{template "platify-badge" "Shared from Platify"}}
+  </body>
+</html>
+{{end}}

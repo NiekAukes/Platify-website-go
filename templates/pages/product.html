@@ -1,0 +1,19 @@
+{{/* product – Product detail page with nutrition information. Input: Product
+struct */}} {{define "product"}}
+<!doctype html>
+<html lang="en">
+  {{template "head" (printf "%s – Platify" .Name)}}
+  <body>
+    <div class="detail-page">
+      {{template "hero-image" (dict "Src" .Thumbnail "Alt" .Name)}}
+
+      <div class="detail-body">
+        <h1>{{.Name}}</h1>
+        {{template "nutrition-product-table" .}}
+      </div>
+    </div>
+
+    {{template "platify-badge" "Platify"}}
+  </body>
+</html>
+{{end}}

@@ -1,0 +1,37 @@
+{{/* nutrition-product-table – Nutrition table for a single product. Input:
+Product (with .Nutrients and .Unit) */}} {{define "nutrition-product-table"}}
+<div class="recipe-section">
+  <h2>Nutrition</h2>
+  <table class="nutrition-items">
+    <thead>
+      <tr>
+        <th>Nutrient</th>
+        <th>Per 100{{if .Unit}} {{.Unit}}{{else}}g{{end}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{if .Nutrients.Energy}}
+      <tr>
+        <td>Energy</td>
+        <td>{{formatFloat .Nutrients.Energy}} kcal</td>
+      </tr>
+      {{end}} {{if .Nutrients.Carbs}}
+      <tr>
+        <td>Carbohydrates</td>
+        <td>{{formatFloat .Nutrients.Carbs}} g</td>
+      </tr>
+      {{end}} {{if .Nutrients.Proteins}}
+      <tr>
+        <td>Protein</td>
+        <td>{{formatFloat .Nutrients.Proteins}} g</td>
+      </tr>
+      {{end}} {{if .Nutrients.Fats}}
+      <tr>
+        <td>Fat</td>
+        <td>{{formatFloat .Nutrients.Fats}} g</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}

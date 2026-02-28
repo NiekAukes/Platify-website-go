@@ -1,0 +1,9 @@
+{{/* shopping-list – Simple checklist of shopping items. Input: Section (with
+.Title and .List) */}} {{define "shopping-list"}}
+<div class="recipe-section">
+  <h2>{{.Title}}</h2>
+  {{range .List}}
+  <div class="shopping-item">{{.Name}}</div>
+  {{end}}
+</div>
+{{end}}

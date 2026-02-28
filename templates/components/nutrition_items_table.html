@@ -1,0 +1,28 @@
+{{/* nutrition-items-table – Nutrition table for recipe items (multi-row).
+Input: []NutritionItem */}} {{define "nutrition-items-table"}}
+<div class="recipe-section">
+  <h2>Nutrition</h2>
+  <table class="nutrition-items">
+    <thead>
+      <tr>
+        <th>Ingredient</th>
+        <th>kcal</th>
+        <th>Carbs</th>
+        <th>Protein</th>
+        <th>Fat</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .}}
+      <tr>
+        <td>{{.Name}}</td>
+        <td>{{formatFloat .Nutrients.Energy}}</td>
+        <td>{{formatFloat .Nutrients.Carbs}}g</td>
+        <td>{{formatFloat .Nutrients.Proteins}}g</td>
+        <td>{{formatFloat .Nutrients.Fats}}g</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}

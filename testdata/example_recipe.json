@@ -1,0 +1,95 @@
+{
+  "recipe": {
+    "id": "_example",
+    "name": "Spaghetti Carbonara",
+    "description": "A classic Roman pasta dish with eggs, cheese, pancetta, and pepper.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/3/33/Fresh_made_pasta_shutterstock_3.jpg",
+    "boards": ["Italian", "Pasta"],
+    "tags": [
+      { "name": "Quick", "lightColor": "#c3a800", "darkColor": "#856404" },
+      { "name": "Classic", "lightColor": "#3a8fa0", "darkColor": "#0C5460" }
+    ],
+    "sections": [
+      {
+        "title": "Ingredients",
+        "ingredients": [
+          { "name": "Spaghetti", "quantity": "400", "unit": "g" },
+          { "name": "Pancetta", "quantity": "150", "unit": "g" },
+          { "name": "Eggs", "quantity": "4", "unit": "" },
+          { "name": "Pecorino Romano", "quantity": "100", "unit": "g" },
+          { "name": "Black Pepper", "quantity": "1", "unit": "tsp" }
+        ]
+      },
+      {
+        "title": "Directions",
+        "directions": [
+          {
+            "heading": "Cook the pasta",
+            "text": "Boil spaghetti in well-salted water until al dente, then reserve a cup of pasta water before draining."
+          },
+          {
+            "heading": "Fry the pancetta",
+            "text": "Cook pancetta in a large pan over medium heat until crispy and golden. Remove from heat."
+          },
+          {
+            "heading": "Make the sauce",
+            "text": "Whisk eggs with finely grated Pecorino Romano and a generous amount of freshly cracked black pepper."
+          },
+          {
+            "heading": "Combine",
+            "text": "Toss the hot drained pasta into the pancetta pan off the heat. Stir in the egg mixture quickly, adding pasta water a splash at a time until silky and coating the pasta."
+          }
+        ]
+      },
+      {
+        "title": "Nutrition",
+        "items": [
+          {
+            "name": "Spaghetti",
+            "quantity": 400,
+            "unit": "g",
+            "nutrients": {
+              "energy": 1480,
+              "carbs": 290,
+              "proteins": 52,
+              "fats": 6
+            }
+          },
+          {
+            "name": "Pancetta",
+            "quantity": 150,
+            "unit": "g",
+            "nutrients": {
+              "energy": 540,
+              "carbs": 0,
+              "proteins": 24,
+              "fats": 48
+            }
+          },
+          {
+            "name": "Eggs",
+            "quantity": 4,
+            "unit": "pcs",
+            "nutrients": {
+              "energy": 280,
+              "carbs": 1.2,
+              "proteins": 24,
+              "fats": 20
+            }
+          },
+          {
+            "name": "Pecorino Romano",
+            "quantity": 100,
+            "unit": "g",
+            "nutrients": {
+              "energy": 387,
+              "carbs": 0,
+              "proteins": 25.5,
+              "fats": 32
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

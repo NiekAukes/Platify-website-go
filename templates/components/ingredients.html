@@ -1,0 +1,15 @@
+{{/* ingredients – List of recipe ingredients with quantity and unit. Input:
+[]Ingredient */}} {{define "ingredients"}}
+<div class="recipe-section">
+  <h2>Ingredients</h2>
+  {{range .}}
+  <div class="ingredient-item">
+    {{$qty := formatQty .Quantity .Unit}} {{if $qty}}<span
+      class="ingredient-qty"
+      >{{$qty}}</span
+    >{{end}}
+    <span class="ingredient-name">{{.Name}}</span>
+  </div>
+  {{end}}
+</div>
+{{end}}

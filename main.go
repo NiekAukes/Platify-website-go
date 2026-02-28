@@ -8,9 +8,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // ─── Config ─────────────────────────────────────────────────────────────────
@@ -19,7 +21,7 @@ func apiBase() string {
 	if v := os.Getenv("API_BASE_URL"); v != "" {
 		return strings.TrimRight(v, "/")
 	}
-	return "https://api.platify.eu"
+	return "https://platify.aukespot.com/"
 }
 
 func listenAddr() string {
@@ -98,12 +100,20 @@ type Product struct {
 	Nutrients Nutrients `json:"nutrients"`
 }
 
-// ─── Templates ───────────────────────────────────────────────────────────────
+// ─── Template helpers ────────────────────────────────────────────────────────
 
-var templates *template.Template
-
-func loadTemplates() {
-	funcMap := template.FuncMap{
+func templateFuncMap() template.FuncMap {
+	return template.FuncMap{
+		// dict builds a map from key-value pairs for passing props to components.
+		//   Usage: {{template "hero-image" (dict "Src" .Image "Alt" .Name)}}
+		"dict": func(pairs ...any) map[string]any {
+			m := make(map[string]any, len(pairs)/2)
+			for i := 0; i < len(pairs)-1; i += 2 {
+				m[pairs[i].(string)] = pairs[i+1]
+			}
+			return m
+		},
+		// formatQty joins a quantity and unit into a display string.
 		"formatQty": func(qty, unit string) string {
 			if qty == "" && unit == "" {
 				return ""
@@ -116,25 +126,51 @@ func loadTemplates() {
 			}
 			return qty + " " + unit
 		},
+		// formatFloat renders a float without trailing zeros.
 		"formatFloat": func(f float64) string {
 			if f == float64(int(f)) {
 				return fmt.Sprintf("%d", int(f))
 			}
 			return fmt.Sprintf("%.1f", f)
 		},
+		// inc adds 1 (used for 1-based step numbering).
 		"inc": func(i int) int {
 			return i + 1
 		},
 	}
-	templates = template.Must(template.New("").Funcs(funcMap).ParseGlob("templates/*.html"))
 }
 
-// ─── API helpers ─────────────────────────────────────────────────────────────
+// loadTemplates walks templates/ and parses every .html file into a single
+// template set. Components use {{define "name"}} blocks; pages reference them
+// via {{template "name" .}}.
+func loadTemplates() *template.Template {
+	tmpl := template.New("").Funcs(templateFuncMap())
+
+	err := filepath.Walk("templates", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, ".html") {
+			if _, err := tmpl.ParseFiles(path); err != nil {
+				return fmt.Errorf("parsing %s: %w", path, err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("Failed to load templates: %v", err)
+	}
+
+	return tmpl
+}
+
+// ─── API client ──────────────────────────────────────────────────────────────
 
 func fetchRecipe(id string) (*Recipe, error) {
 	url := apiBase() + "/recipes/" + id
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -144,12 +180,14 @@ func fetchRecipe(id string) (*Recipe, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
+
 	var rr RecipeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rr); err != nil {
 		return nil, err
@@ -161,6 +199,7 @@ func fetchProduct(id string) (*Product, error) {
 	url := apiBase() + "/products/" + id
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -170,12 +209,14 @@ func fetchProduct(id string) (*Product, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
+
 	var product Product
 	if err := json.NewDecoder(resp.Body).Decode(&product); err != nil {
 		return nil, err
@@ -185,95 +226,100 @@ func fetchProduct(id string) (*Product, error) {
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
-func handleHome(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-	if err := templates.ExecuteTemplate(w, "home.html", nil); err != nil {
-		log.Printf("template error: %v", err)
-	}
+func handleHome(c *gin.Context) {
+	c.HTML(http.StatusOK, "home", nil)
 }
 
-func handleRecipe(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, "/recipes/")
-	id = path.Base(id)
-	if id == "" || id == "." || id == "/" {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	}
+func handleRecipe(c *gin.Context) {
+	id := c.Param("id")
 
 	recipe, err := fetchRecipe(id)
 	if err != nil {
 		log.Printf("fetchRecipe(%q): %v", id, err)
-		renderError(w, http.StatusInternalServerError, "Could not load recipe", "The recipe could not be loaded. Please try again later.")
+		renderError(c, http.StatusInternalServerError,
+			"Could not load recipe",
+			"The recipe could not be loaded. Please try again later.")
 		return
 	}
 	if recipe == nil {
-		renderError(w, http.StatusNotFound, "Recipe not found", "This recipe does not exist or is no longer available.")
+		renderError(c, http.StatusNotFound,
+			"Recipe not found",
+			"This recipe does not exist or is no longer available.")
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "recipe.html", recipe); err != nil {
-		log.Printf("template error: %v", err)
-	}
+	c.HTML(http.StatusOK, "recipe", recipe)
 }
 
-func handleProduct(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, "/products/")
-	id = path.Base(id)
-	if id == "" || id == "." || id == "/" {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	}
+func handleProduct(c *gin.Context) {
+	id := c.Param("id")
 
 	product, err := fetchProduct(id)
 	if err != nil {
 		log.Printf("fetchProduct(%q): %v", id, err)
-		renderError(w, http.StatusInternalServerError, "Could not load product", "The product could not be loaded. Please try again later.")
+		renderError(c, http.StatusInternalServerError,
+			"Could not load product",
+			"The product could not be loaded. Please try again later.")
 		return
 	}
 	if product == nil {
-		renderError(w, http.StatusNotFound, "Product not found", "This product does not exist or is no longer available.")
+		renderError(c, http.StatusNotFound,
+			"Product not found",
+			"This product does not exist or is no longer available.")
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "product.html", product); err != nil {
-		log.Printf("template error: %v", err)
+	c.HTML(http.StatusOK, "product", product)
+}
+
+// handleExampleRecipe renders the recipe page using testdata/example_recipe.json.
+// Only registered in non-release mode (GIN_MODE != release).
+func handleExampleRecipe(c *gin.Context) {
+	data, err := os.ReadFile("testdata/example_recipe.json")
+	if err != nil {
+		renderError(c, http.StatusInternalServerError, "Example not found", "Could not read testdata/example_recipe.json.")
+		return
 	}
-}
-
-func handlePrivacyPolicy(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "prev-website/privacy-policy/index.html")
-}
-
-func renderError(w http.ResponseWriter, status int, title, message string) {
-	w.WriteHeader(status)
-	data := struct {
-		Title   string
-		Message string
-	}{title, message}
-	if err := templates.ExecuteTemplate(w, "error.html", data); err != nil {
-		log.Printf("error template: %v", err)
-		http.Error(w, message, status)
+	var rr RecipeResponse
+	if err := json.Unmarshal(data, &rr); err != nil {
+		renderError(c, http.StatusInternalServerError, "Example invalid", "Could not parse testdata/example_recipe.json.")
+		return
 	}
+	c.HTML(http.StatusOK, "recipe", rr.Recipe)
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+func handlePrivacyPolicy(c *gin.Context) {
+	c.File("prev-website/privacy-policy/index.html")
+}
+
+func renderError(c *gin.Context, status int, title, message string) {
+	c.HTML(status, "error", gin.H{
+		"Title":   title,
+		"Message": message,
+	})
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
 
 func main() {
-	loadTemplates()
+	router := gin.Default()
+	router.SetHTMLTemplate(loadTemplates())
+	router.Static("/static", "./static")
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handleHome)
-	mux.HandleFunc("/recipes/", handleRecipe)
-	mux.HandleFunc("/products/", handleProduct)
-	mux.HandleFunc("/privacy-policy", handlePrivacyPolicy)
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	router.GET("/", handleHome)
+	router.GET("/recipes/:id", handleRecipe)
+	router.GET("/products/:id", handleProduct)
+	router.GET("/privacy-policy", handlePrivacyPolicy)
+
+	// Dev-only: preview the recipe page with local example data.
+	if gin.Mode() != gin.ReleaseMode {
+		router.GET("/recipes/_example", handleExampleRecipe)
+		log.Printf("Dev route registered: GET /recipes/_example")
+	}
 
 	addr := listenAddr()
 	log.Printf("Platify website listening on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := router.Run(addr); err != nil {
 		log.Fatal(err)
 	}
 }

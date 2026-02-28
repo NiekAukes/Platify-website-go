@@ -1,0 +1,17 @@
+{{/* directions – Numbered step-by-step cooking directions. Input: []Direction
+*/}} {{define "directions"}}
+<div class="recipe-section">
+  <h2>Directions</h2>
+  {{range $i, $d := .}}
+  <div class="direction-step">
+    <div class="step-number">{{inc $i}}</div>
+    <div>
+      {{if $d.Heading}}
+      <div class="step-heading">{{$d.Heading}}</div>
+      {{end}}
+      <div class="step-text">{{$d.Text}}</div>
+    </div>
+  </div>
+  {{end}}
+</div>
+{{end}}

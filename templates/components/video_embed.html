@@ -1,0 +1,9 @@
+{{/* video-embed – Responsive video iframe container. Input: Section (with
+.Title and .VideoLink) */}} {{define "video-embed"}}
+<div class="recipe-section">
+  <h2>{{.Title}}</h2>
+  <div class="video-container">
+    <iframe src="{{.VideoLink}}" allowfullscreen></iframe>
+  </div>
+</div>
+{{end}}

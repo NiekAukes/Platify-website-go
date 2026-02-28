@@ -1,0 +1,24 @@
+{{/* hero-image – Detail page hero with gradient overlay and image/placeholder.
+Input: map with keys "Src" (image URL) and "Alt" (alt text) */}} {{define
+"hero-image"}}
+<div class="detail-hero">
+  <div class="gradient"></div>
+  {{if .Src}}
+  <img src="{{.Src}}" alt="{{.Alt}}" />
+  {{else}}
+  <div class="placeholder-img">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      style="width: 64px; height: 64px; opacity: 0.3"
+    >
+      <path
+        d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2M7 2v20M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3m0-10v10"
+      />
+    </svg>
+  </div>
+  {{end}}
+</div>
+{{end}}

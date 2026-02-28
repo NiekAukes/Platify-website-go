@@ -1,0 +1,19 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    profiles: [dev]
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount the full project so air can watch and rebuild on every save
+      - .:/app
+      # Separate volume for the build cache so rebuilds stay fast
+      - go-build-cache:/root/.cache/go-build
+    environment:
+      - PORT=8080
+      - GIN_MODE=debug
+
+volumes:
+  go-build-cache:

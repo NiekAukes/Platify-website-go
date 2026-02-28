@@ -1,0 +1,11 @@
+{{/* home – Landing page composed from header, hero, features, CTA and footer.
+Input: none */}} {{define "home"}}
+<!doctype html>
+<html lang="en">
+  {{template "head" "Platify – Organize. Cook. Create."}}
+  <body>
+    {{template "header"}} {{template "home-hero"}} {{template "home-features"}}
+    {{template "home-cta"}} {{template "footer"}}
+  </body>
+</html>
+{{end}}

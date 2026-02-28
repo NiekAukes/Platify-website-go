@@ -1,0 +1,23 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd        = "go build -o ./tmp/server ."
+  bin        = "./tmp/server"
+  delay      = 200          # ms to wait after a change before rebuilding
+  include_ext = ["go", "html", "css", "js"]
+  exclude_dir = ["tmp", "prev-website", ".git"]
+  kill_delay  = "200ms"
+  send_interrupt = true
+
+[log]
+  time = false
+
+[color]
+  build  = "yellow"
+  runner = "green"
+  watcher = "cyan"
+  main   = "magenta"
+
+[misc]
+  clean_on_exit = true

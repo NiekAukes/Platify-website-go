@@ -1,0 +1,15 @@
+FROM golang:1.25-alpine
+
+WORKDIR /app
+
+# Install air for live reload
+RUN go install github.com/air-verse/air@latest
+
+# Pre-fetch dependencies so the volume mount doesn't need network access
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Source is mounted as a volume at runtime – no COPY needed here
+EXPOSE 8080
+
+CMD ["air"]

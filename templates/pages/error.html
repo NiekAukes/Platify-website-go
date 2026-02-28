@@ -1,0 +1,25 @@
+{{/* error – Error page with header, message and go-home button. Input: map with
+"Title" and "Message" */}} {{define "error"}}
+<!doctype html>
+<html lang="en">
+  {{template "head" (printf "%s – Platify" .Title)}}
+  <body>
+    {{template "header"}}
+
+    <div class="container">
+      <div class="error-state">
+        <h2>{{.Title}}</h2>
+        <p>{{.Message}}</p>
+        <a
+          href="/"
+          style="margin-top: 24px; display: inline-block"
+          class="btn-primary"
+          >Go Home</a
+        >
+      </div>
+    </div>
+
+    {{template "footer"}}
+  </body>
+</html>
+{{end}}
