@@ -308,6 +308,18 @@ func handlePrivacyPolicy(c *gin.Context) {
 	c.File("prev-website/privacy-policy/index.html")
 }
 
+func handleFAQ(c *gin.Context) {
+	c.HTML(http.StatusOK, "faq", nil)
+}
+
+func handleContact(c *gin.Context) {
+	c.HTML(http.StatusOK, "contact", nil)
+}
+
+func handleHowItWorks(c *gin.Context) {
+	c.HTML(http.StatusOK, "how-it-works", nil)
+}
+
 func renderError(c *gin.Context, status int, title, message string) {
 	c.HTML(status, "error", gin.H{
 		"Title":   title,
@@ -326,6 +338,9 @@ func main() {
 	router.GET("/recipes/:id", handleRecipe)
 	router.GET("/products/:id", handleProduct)
 	router.GET("/privacy-policy", handlePrivacyPolicy)
+	router.GET("/faq", handleFAQ)
+	router.GET("/contact", handleContact)
+	router.GET("/how-it-works", handleHowItWorks)
 
 	// Dev-only: preview the recipe/product pages with local example data.
 	if gin.Mode() != gin.ReleaseMode {
