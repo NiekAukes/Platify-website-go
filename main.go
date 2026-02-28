@@ -226,6 +226,10 @@ func fetchProduct(id string) (*Product, error) {
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
+func handleRecipeEditor(c *gin.Context) {
+	c.HTML(http.StatusOK, "recipe_editor", nil)
+}
+
 func handleHome(c *gin.Context) {
 	c.HTML(http.StatusOK, "home", nil)
 }
@@ -323,6 +327,7 @@ func main() {
 	router.Static("/static", "./static")
 
 	router.GET("/", handleHome)
+	router.GET("/recipes/editor", handleRecipeEditor)
 	router.GET("/recipes/:id", handleRecipe)
 	router.GET("/products/:id", handleProduct)
 	router.GET("/privacy-policy", handlePrivacyPolicy)

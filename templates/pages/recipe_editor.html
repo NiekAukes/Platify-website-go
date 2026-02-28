@@ -1,0 +1,755 @@
+{{/* recipe_editor – Desktop recipe editor with live preview. Input: Recipe (may be zero-value) */}}
+{{define "recipe_editor"}}
+<!doctype html>
+<html lang="en">
+  {{template "head" "Recipe Editor – Platify"}}
+  <body>
+    <div class="editor-shell">
+      <!-- ── Top bar ─────────────────────────────────────────── -->
+      <header class="editor-topbar">
+        <a href="/" class="editor-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M21 2V22H19V14H16V7C16 4.23858 18.2386 2 21 2ZM9 13.9V22H7V13.9C4.71776 13.4367 3 11.419 3 9V3H5V10H7V3H9V10H11V3H13V9C13 11.419 11.2822 13.4367 9 13.9Z"/>
+          </svg>
+          Platify
+        </a>
+        <span class="editor-topbar-title">Recipe Editor</span>
+        <div class="editor-topbar-actions">
+          <button class="editor-btn editor-btn--secondary" onclick="editorImportJSON()" title="Import recipe from JSON">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11 16H13V10H16L12 6L8 10H11V16ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z"/></svg>
+            Import JSON
+          </button>
+          <button class="editor-btn editor-btn--secondary" onclick="editorExportJSON()" title="Export recipe as JSON">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M13 10H18L12 16L6 10H11V3H13V10ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z"/></svg>
+            Export JSON
+          </button>
+          <button class="editor-btn editor-btn--primary" id="preview-toggle-btn" onclick="editorToggleMobilePreview()" title="Toggle preview">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            Preview
+          </button>
+        </div>
+      </header>
+
+      <!-- ── Main two-column layout ────────────────────────── -->
+      <div class="editor-columns" id="editor-columns">
+
+        <!-- Left: edit panel -->
+        <div class="editor-form-panel" id="editor-form-panel">
+          <div class="editor-form-scroll">
+
+            <!-- Basics -->
+            <section class="editor-card" id="section-basics">
+              <h2 class="editor-card-title">Basics</h2>
+
+              <div class="editor-field">
+                <label class="editor-label" for="recipe-name">Recipe name</label>
+                <input class="editor-input" id="recipe-name" type="text" placeholder="e.g. Spaghetti Carbonara" oninput="editorSync()" />
+              </div>
+
+              <div class="editor-field">
+                <label class="editor-label" for="recipe-desc">Description</label>
+                <textarea class="editor-input editor-textarea" id="recipe-desc" placeholder="Short description of the recipe…" rows="3" oninput="editorSync()"></textarea>
+              </div>
+
+              <div class="editor-field">
+                <label class="editor-label" for="recipe-image">Image URL</label>
+                <input class="editor-input" id="recipe-image" type="url" placeholder="https://…" oninput="editorSync()" />
+              </div>
+            </section>
+
+            <!-- Boards & Tags -->
+            <section class="editor-card">
+              <h2 class="editor-card-title">Boards &amp; Tags</h2>
+
+              <div class="editor-field">
+                <label class="editor-label">Boards</label>
+                <div class="editor-chip-row" id="boards-chips"></div>
+                <div class="editor-inline-add">
+                  <input class="editor-input editor-input--sm" id="new-board" type="text" placeholder="Board name" />
+                  <button class="editor-btn editor-btn--add" onclick="editorAddBoard()">Add</button>
+                </div>
+              </div>
+
+              <div class="editor-field">
+                <label class="editor-label">Tags</label>
+                <div id="tags-list"></div>
+                <div class="editor-inline-add">
+                  <input class="editor-input editor-input--sm" id="new-tag-name" type="text" placeholder="Tag name" />
+                  <div class="editor-color-pair">
+                    <label class="editor-label editor-label--tiny">Light</label>
+                    <input class="editor-color-input" id="new-tag-light" type="color" value="#c3a800" />
+                  </div>
+                  <div class="editor-color-pair">
+                    <label class="editor-label editor-label--tiny">Dark</label>
+                    <input class="editor-color-input" id="new-tag-dark" type="color" value="#856404" />
+                  </div>
+                  <button class="editor-btn editor-btn--add" onclick="editorAddTag()">Add</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Sections -->
+            <section class="editor-card">
+              <div class="editor-card-header">
+                <h2 class="editor-card-title">Sections</h2>
+                <div class="editor-inline-add editor-inline-add--right">
+                  <select class="editor-select editor-select--sm" id="new-section-type">
+                    <option value="Ingredients">Ingredients</option>
+                    <option value="Directions">Directions</option>
+                    <option value="Nutrition">Nutrition</option>
+                    <option value="Video">Video</option>
+                    <option value="ShoppingList">Shopping List</option>
+                    <option value="Custom">Custom</option>
+                  </select>
+                  <button class="editor-btn editor-btn--add" onclick="editorAddSection()">Add Section</button>
+                </div>
+              </div>
+
+              <div id="sections-list"></div>
+            </section>
+
+          </div><!-- /editor-form-scroll -->
+        </div><!-- /editor-form-panel -->
+
+        <!-- Right: live preview -->
+        <div class="editor-preview-panel" id="editor-preview-panel">
+          <div class="editor-preview-scroll">
+            <div class="detail-page" id="preview-root">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /editor-columns -->
+    </div><!-- /editor-shell -->
+
+    <!-- ── Import JSON modal ──────────────────────────────── -->
+    <div class="editor-modal-backdrop" id="import-modal-backdrop" onclick="editorCloseImportModal()" aria-hidden="true"></div>
+    <div class="editor-modal" id="import-modal" role="dialog" aria-labelledby="import-modal-title" aria-modal="true">
+      <div class="editor-modal-header">
+        <h3 class="editor-modal-title" id="import-modal-title">Import Recipe JSON</h3>
+        <button class="editor-btn editor-btn--icon" onclick="editorCloseImportModal()" aria-label="Close">×</button>
+      </div>
+      <p class="editor-modal-hint">Paste a recipe JSON object below. You can use the full API response (with a <code>"recipe"</code> key) or just the recipe object.</p>
+      <p class="editor-modal-error" id="import-modal-error" aria-live="polite"></p>
+      <textarea class="editor-input editor-textarea editor-modal-textarea" id="import-modal-textarea" placeholder='{"recipe": {"name": "…", "sections": […]}}'></textarea>
+      <div class="editor-modal-actions">
+        <button class="editor-btn editor-btn--secondary-dark" onclick="editorCloseImportModal()">Cancel</button>
+        <button class="editor-btn editor-btn--add" onclick="editorConfirmImport()">Import</button>
+      </div>
+    </div>
+
+    <script>
+    // ─────────────────────────────────────────────────────────────────────────
+    // Recipe Editor – state & live preview
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ── Initial state ──────────────────────────────────────────────────────
+    var state = {
+      name: "",
+      description: "",
+      image: "",
+      boards: [],
+      tags: [],
+      sections: []
+    };
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+
+    function uid() {
+      return Math.random().toString(36).slice(2);
+    }
+
+    function normSection(s) {
+      return {
+        _id:       s._id        || uid(),
+        type:      s.type       || inferType(s),
+        title:     s.title      || "",
+        ingredients: (s.ingredients || []).map(function(i){ return { _id: uid(), name: i.name||"", quantity: i.quantity||"", unit: i.unit||"" }; }),
+        directions:  (s.directions  || []).map(function(d){ return { _id: uid(), heading: d.heading||"", text: d.text||"" }; }),
+        items:       (s.items || []).map(function(n) {
+          var nut = n.nutrients || {};
+          return { _id: uid(), name: n.name||"", quantity: n.quantity||0, unit: n.unit||"",
+            energy: nut.energy||0, carbs: nut.carbs||0, proteins: nut.proteins||0, fats: nut.fats||0 };
+        }),
+        videoLink:   s.videoLink    || "",
+        list:        (s.list        || []).map(function(i){ return { _id: uid(), name: i.name||"" }; })
+      };
+    }
+
+    function inferType(s) {
+      if (s.ingredients && s.ingredients.length) return "Ingredients";
+      if (s.directions  && s.directions.length)  return "Directions";
+      if (s.items       && s.items.length)        return "Nutrition";
+      if (s.videoLink)                            return "Video";
+      if (s.list        && s.list.length)         return "ShoppingList";
+      return s.title || "Custom";
+    }
+
+    function esc(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function fmtQty(qty, unit) {
+      qty = String(qty || "").trim();
+      unit = String(unit || "").trim();
+      if (!qty && !unit) return "";
+      if (!unit) return qty;
+      if (!qty)  return unit;
+      return qty + " " + unit;
+    }
+
+    function fmtNum(n) {
+      var f = parseFloat(n) || 0;
+      return f === Math.floor(f) ? String(Math.floor(f)) : f.toFixed(1);
+    }
+
+    // ── Form → state ───────────────────────────────────────────────────────
+
+    function editorSync() {
+      state.name        = document.getElementById("recipe-name").value;
+      state.description = document.getElementById("recipe-desc").value;
+      state.image       = document.getElementById("recipe-image").value;
+      renderPreview();
+    }
+
+    // ── Boards ─────────────────────────────────────────────────────────────
+
+    function editorAddBoard() {
+      var input = document.getElementById("new-board");
+      var val = input.value.trim();
+      if (!val) return;
+      state.boards.push(val);
+      input.value = "";
+      renderBoardChips();
+      renderPreview();
+    }
+
+    function editorRemoveBoard(idx) {
+      state.boards.splice(idx, 1);
+      renderBoardChips();
+      renderPreview();
+    }
+
+    function renderBoardChips() {
+      var el = document.getElementById("boards-chips");
+      el.innerHTML = state.boards.map(function(b, i) {
+        return '<span class="editor-chip">' + esc(b) +
+          '<button class="editor-chip-remove" onclick="editorRemoveBoard(' + i + ')" aria-label="Remove">&times;</button></span>';
+      }).join("");
+    }
+
+    // ── Tags ───────────────────────────────────────────────────────────────
+
+    function editorAddTag() {
+      var name  = document.getElementById("new-tag-name").value.trim();
+      if (!name) return;
+      var light = document.getElementById("new-tag-light").value;
+      var dark  = document.getElementById("new-tag-dark").value;
+      state.tags.push({ _id: uid(), name: name, lightColor: light, darkColor: dark });
+      document.getElementById("new-tag-name").value = "";
+      renderTagsList();
+      renderPreview();
+    }
+
+    function editorRemoveTag(id) {
+      state.tags = state.tags.filter(function(t){ return t._id !== id; });
+      renderTagsList();
+      renderPreview();
+    }
+
+    function renderTagsList() {
+      var el = document.getElementById("tags-list");
+      if (!state.tags.length) { el.innerHTML = ""; return; }
+      el.innerHTML = state.tags.map(function(t) {
+        return '<div class="editor-tag-row">' +
+          '<span class="tag-chip colored" style="--chip-color:' + esc(t.lightColor) + '"><span class="dot"></span>' + esc(t.name) + '</span>' +
+          '<div class="editor-color-pair"><label class="editor-label editor-label--tiny">Light</label>' +
+          '<input class="editor-color-input" type="color" value="' + esc(t.lightColor) + '" oninput="editorUpdateTagColor(\'' + t._id + '\', \'lightColor\', this.value)" /></div>' +
+          '<div class="editor-color-pair"><label class="editor-label editor-label--tiny">Dark</label>' +
+          '<input class="editor-color-input" type="color" value="' + esc(t.darkColor) + '" oninput="editorUpdateTagColor(\'' + t._id + '\', \'darkColor\', this.value)" /></div>' +
+          '<button class="editor-btn editor-btn--icon editor-btn--danger" onclick="editorRemoveTag(\'' + t._id + '\')" aria-label="Remove tag">×</button>' +
+          '</div>';
+      }).join("");
+    }
+
+    function editorUpdateTagColor(id, key, val) {
+      var t = state.tags.find(function(x){ return x._id === id; });
+      if (t) { t[key] = val; renderTagsList(); renderPreview(); }
+    }
+
+    // ── Sections ───────────────────────────────────────────────────────────
+
+    function editorAddSection() {
+      var type = document.getElementById("new-section-type").value;
+      var titleMap = { Ingredients: "Ingredients", Directions: "Directions", Nutrition: "Nutrition", Video: "Video", ShoppingList: "Shopping List", Custom: "New Section" };
+      state.sections.push(normSection({ type: type, title: titleMap[type] || type }));
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorRemoveSection(id) {
+      state.sections = state.sections.filter(function(s){ return s._id !== id; });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorMoveSectionUp(id) {
+      var idx = state.sections.findIndex(function(s){ return s._id === id; });
+      if (idx <= 0) return;
+      var tmp = state.sections[idx - 1];
+      state.sections[idx - 1] = state.sections[idx];
+      state.sections[idx] = tmp;
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorMoveSectionDown(id) {
+      var idx = state.sections.findIndex(function(s){ return s._id === id; });
+      if (idx < 0 || idx >= state.sections.length - 1) return;
+      var tmp = state.sections[idx + 1];
+      state.sections[idx + 1] = state.sections[idx];
+      state.sections[idx] = tmp;
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorSyncSectionTitle(id, val) {
+      var s = state.sections.find(function(x){ return x._id === id; });
+      if (s) { s.title = val; renderPreview(); }
+    }
+
+    // Ingredients within a section
+    function editorAddIngredient(sectionId) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      s.ingredients.push({ _id: uid(), name: "", quantity: "", unit: "" });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorRemoveIngredient(sectionId, ingId) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      s.ingredients = s.ingredients.filter(function(i){ return i._id !== ingId; });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorSyncIngredient(sectionId, ingId, field, val) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      var ing = s.ingredients.find(function(i){ return i._id === ingId; });
+      if (ing) { ing[field] = val; renderPreview(); }
+    }
+
+    // Directions within a section
+    function editorAddDirection(sectionId) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      s.directions.push({ _id: uid(), heading: "", text: "" });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorRemoveDirection(sectionId, dirId) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      s.directions = s.directions.filter(function(d){ return d._id !== dirId; });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorSyncDirection(sectionId, dirId, field, val) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      var dir = s.directions.find(function(d){ return d._id === dirId; });
+      if (dir) { dir[field] = val; renderPreview(); }
+    }
+
+    // Nutrition items within a section
+    function editorAddNutritionItem(sectionId) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      s.items.push({ _id: uid(), name: "", quantity: 0, unit: "", energy: 0, carbs: 0, proteins: 0, fats: 0 });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorRemoveNutritionItem(sectionId, itemId) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      s.items = s.items.filter(function(i){ return i._id !== itemId; });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorSyncNutritionItem(sectionId, itemId, field, val) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      var item = s.items.find(function(i){ return i._id === itemId; });
+      if (item) { item[field] = val; renderPreview(); }
+    }
+
+    // Video
+    function editorSyncVideoLink(sectionId, val) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (s) { s.videoLink = val; renderPreview(); }
+    }
+
+    // Shopping list items
+    function editorAddShoppingItem(sectionId) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      s.list.push({ _id: uid(), name: "" });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorRemoveShoppingItem(sectionId, itemId) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      s.list = s.list.filter(function(i){ return i._id !== itemId; });
+      renderSectionsList();
+      renderPreview();
+    }
+
+    function editorSyncShoppingItem(sectionId, itemId, val) {
+      var s = state.sections.find(function(x){ return x._id === sectionId; });
+      if (!s) return;
+      var item = s.list.find(function(i){ return i._id === itemId; });
+      if (item) { item.name = val; renderPreview(); }
+    }
+
+    // ── Render sections form ───────────────────────────────────────────────
+
+    function renderSectionsList() {
+      var el = document.getElementById("sections-list");
+      if (!state.sections.length) {
+        el.innerHTML = '<p class="editor-empty-hint">No sections yet — add one above.</p>';
+        return;
+      }
+      el.innerHTML = state.sections.map(function(s, idx) {
+        return renderSectionEditor(s, idx);
+      }).join("");
+    }
+
+    function renderSectionEditor(s, idx) {
+      var isFirst = idx === 0;
+      var isLast  = idx === state.sections.length - 1;
+      var html = '<div class="editor-section-block" id="sec-' + s._id + '">' +
+        '<div class="editor-section-header">' +
+        '<span class="editor-section-type-badge">' + esc(s.type === "ShoppingList" ? "Shopping List" : s.type) + '</span>' +
+        (s.type === "Custom" || s.type === "Video"
+          ? '<input class="editor-input editor-input--inline-title" type="text" value="' + esc(s.title) + '" placeholder="Section title" oninput="editorSyncSectionTitle(\'' + s._id + '\', this.value)" />'
+          : '<span class="editor-section-title-static">' + esc(s.title) + '</span>') +
+        '<div class="editor-section-controls">' +
+        (!isFirst ? '<button class="editor-btn editor-btn--icon" onclick="editorMoveSectionUp(\'' + s._id + '\')" title="Move up">↑</button>' : '') +
+        (!isLast  ? '<button class="editor-btn editor-btn--icon" onclick="editorMoveSectionDown(\'' + s._id + '\')" title="Move down">↓</button>' : '') +
+        '<button class="editor-btn editor-btn--icon editor-btn--danger" onclick="editorRemoveSection(\'' + s._id + '\')" title="Delete section">×</button>' +
+        '</div></div>'; // end header
+
+      if (s.type === "Ingredients") {
+        html += renderIngredientsEditor(s);
+      } else if (s.type === "Directions") {
+        html += renderDirectionsEditor(s);
+      } else if (s.type === "Nutrition") {
+        html += renderNutritionEditor(s);
+      } else if (s.type === "Video") {
+        html += renderVideoEditor(s);
+      } else if (s.type === "ShoppingList") {
+        html += renderShoppingListEditor(s);
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderIngredientsEditor(s) {
+      var rows = s.ingredients.map(function(ing) {
+        return '<div class="editor-row editor-row--ing">' +
+          '<input class="editor-input editor-input--ing-qty" type="text" value="' + esc(ing.quantity) + '" placeholder="Qty" oninput="editorSyncIngredient(\'' + s._id + '\',\'' + ing._id + '\',\'quantity\',this.value)" />' +
+          '<input class="editor-input editor-input--ing-unit" type="text" value="' + esc(ing.unit) + '" placeholder="Unit" oninput="editorSyncIngredient(\'' + s._id + '\',\'' + ing._id + '\',\'unit\',this.value)" />' +
+          '<input class="editor-input editor-input--ing-name" type="text" value="' + esc(ing.name) + '" placeholder="Ingredient name" oninput="editorSyncIngredient(\'' + s._id + '\',\'' + ing._id + '\',\'name\',this.value)" />' +
+          '<button class="editor-btn editor-btn--icon editor-btn--danger" onclick="editorRemoveIngredient(\'' + s._id + '\',\'' + ing._id + '\')" title="Remove">×</button>' +
+          '</div>';
+      }).join("");
+      return '<div class="editor-section-body">' +
+        '<div class="editor-row editor-row--header"><span>Qty</span><span>Unit</span><span>Name</span></div>' +
+        rows +
+        '<button class="editor-btn editor-btn--add-row" onclick="editorAddIngredient(\'' + s._id + '\')">+ Add ingredient</button>' +
+        '</div>';
+    }
+
+    function renderDirectionsEditor(s) {
+      var rows = s.directions.map(function(dir, i) {
+        return '<div class="editor-direction-block">' +
+          '<div class="editor-direction-num">' + (i + 1) + '</div>' +
+          '<div class="editor-direction-fields">' +
+          '<input class="editor-input" type="text" value="' + esc(dir.heading) + '" placeholder="Step heading (optional)" oninput="editorSyncDirection(\'' + s._id + '\',\'' + dir._id + '\',\'heading\',this.value)" />' +
+          '<textarea class="editor-input editor-textarea" rows="3" placeholder="Step description…" oninput="editorSyncDirection(\'' + s._id + '\',\'' + dir._id + '\',\'text\',this.value)">' + esc(dir.text) + '</textarea>' +
+          '</div>' +
+          '<button class="editor-btn editor-btn--icon editor-btn--danger" onclick="editorRemoveDirection(\'' + s._id + '\',\'' + dir._id + '\')" title="Remove">×</button>' +
+          '</div>';
+      }).join("");
+      return '<div class="editor-section-body">' + rows +
+        '<button class="editor-btn editor-btn--add-row" onclick="editorAddDirection(\'' + s._id + '\')">+ Add step</button>' +
+        '</div>';
+    }
+
+    function renderNutritionEditor(s) {
+      var rows = s.items.map(function(item) {
+        return '<div class="editor-row editor-row--nutrition">' +
+          '<input class="editor-input editor-input--nut-name" type="text" value="' + esc(item.name) + '" placeholder="Name" oninput="editorSyncNutritionItem(\'' + s._id + '\',\'' + item._id + '\',\'name\',this.value)" />' +
+          '<input class="editor-input editor-input--nut-num" type="number" value="' + esc(item.quantity) + '" placeholder="Qty" oninput="editorSyncNutritionItem(\'' + s._id + '\',\'' + item._id + '\',\'quantity\',parseFloat(this.value)||0)" />' +
+          '<input class="editor-input editor-input--nut-unit" type="text" value="' + esc(item.unit) + '" placeholder="Unit" oninput="editorSyncNutritionItem(\'' + s._id + '\',\'' + item._id + '\',\'unit\',this.value)" />' +
+          '<input class="editor-input editor-input--nut-num" type="number" value="' + esc(item.energy) + '" placeholder="kcal" title="Energy (kcal)" oninput="editorSyncNutritionItem(\'' + s._id + '\',\'' + item._id + '\',\'energy\',parseFloat(this.value)||0)" />' +
+          '<input class="editor-input editor-input--nut-num" type="number" value="' + esc(item.carbs) + '" placeholder="Carbs g" title="Carbs (g)" oninput="editorSyncNutritionItem(\'' + s._id + '\',\'' + item._id + '\',\'carbs\',parseFloat(this.value)||0)" />' +
+          '<input class="editor-input editor-input--nut-num" type="number" value="' + esc(item.proteins) + '" placeholder="Protein g" title="Protein (g)" oninput="editorSyncNutritionItem(\'' + s._id + '\',\'' + item._id + '\',\'proteins\',parseFloat(this.value)||0)" />' +
+          '<input class="editor-input editor-input--nut-num" type="number" value="' + esc(item.fats) + '" placeholder="Fat g" title="Fat (g)" oninput="editorSyncNutritionItem(\'' + s._id + '\',\'' + item._id + '\',\'fats\',parseFloat(this.value)||0)" />' +
+          '<button class="editor-btn editor-btn--icon editor-btn--danger" onclick="editorRemoveNutritionItem(\'' + s._id + '\',\'' + item._id + '\')" title="Remove">×</button>' +
+          '</div>';
+      }).join("");
+      return '<div class="editor-section-body">' +
+        '<div class="editor-row editor-row--header editor-row--nutrition"><span>Name</span><span>Qty</span><span>Unit</span><span>kcal</span><span>Carbs</span><span>Protein</span><span>Fat</span></div>' +
+        rows +
+        '<button class="editor-btn editor-btn--add-row" onclick="editorAddNutritionItem(\'' + s._id + '\')">+ Add item</button>' +
+        '</div>';
+    }
+
+    function renderVideoEditor(s) {
+      return '<div class="editor-section-body">' +
+        '<div class="editor-field">' +
+        '<label class="editor-label">YouTube / Video URL</label>' +
+        '<input class="editor-input" type="url" value="' + esc(s.videoLink) + '" placeholder="https://youtube.com/watch?v=…" oninput="editorSyncVideoLink(\'' + s._id + '\', this.value)" />' +
+        '</div></div>';
+    }
+
+    function renderShoppingListEditor(s) {
+      var rows = s.list.map(function(item) {
+        return '<div class="editor-row editor-row--shopping">' +
+          '<input class="editor-input" type="text" value="' + esc(item.name) + '" placeholder="Item" oninput="editorSyncShoppingItem(\'' + s._id + '\',\'' + item._id + '\',this.value)" />' +
+          '<button class="editor-btn editor-btn--icon editor-btn--danger" onclick="editorRemoveShoppingItem(\'' + s._id + '\',\'' + item._id + '\')" title="Remove">×</button>' +
+          '</div>';
+      }).join("");
+      return '<div class="editor-section-body">' + rows +
+        '<button class="editor-btn editor-btn--add-row" onclick="editorAddShoppingItem(\'' + s._id + '\')">+ Add item</button>' +
+        '</div>';
+    }
+
+    // ── Preview rendering ──────────────────────────────────────────────────
+
+    function renderPreview() {
+      var root = document.getElementById("preview-root");
+      root.innerHTML = buildPreviewHTML();
+    }
+
+    function buildPreviewHTML() {
+      var name  = state.name  || "<em>Untitled Recipe</em>";
+      var image = state.image;
+
+      var heroHtml = '<div class="detail-hero">' +
+        '<div class="gradient"></div>' +
+        (image
+          ? '<img src="' + esc(image) + '" alt="' + esc(state.name) + '" />'
+          : '<div class="placeholder-img"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;opacity:0.3"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2M7 2v20M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3m0-10v10"/></svg></div>') +
+        '</div>';
+
+      var tagsHtml = "";
+      if (state.boards.length || state.tags.length) {
+        tagsHtml = '<div class="tag-list">';
+        state.boards.forEach(function(b) {
+          tagsHtml += '<span class="tag-chip board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' + esc(b) + '</span>';
+        });
+        state.tags.forEach(function(t) {
+          tagsHtml += '<span class="tag-chip colored" style="--chip-color:' + esc(t.lightColor) + '"><span class="dot"></span>' + esc(t.name) + '</span>';
+        });
+        tagsHtml += '</div>';
+      }
+
+      var descHtml = state.description
+        ? '<p class="description">' + esc(state.description) + '</p>'
+        : "";
+
+      var sectionsHtml = state.sections.map(renderSectionPreview).join("");
+
+      return heroHtml +
+        '<div class="detail-body">' +
+        '<h1>' + name + '</h1>' +
+        tagsHtml + descHtml + sectionsHtml +
+        '</div>';
+    }
+
+    function renderSectionPreview(s) {
+      if (s.type === "Ingredients" && s.ingredients.length) {
+        return '<div class="recipe-section"><h2>Ingredients</h2>' +
+          s.ingredients.map(function(ing) {
+            var qty = fmtQty(ing.quantity, ing.unit);
+            return '<div class="ingredient-item">' +
+              (qty ? '<span class="ingredient-qty">' + esc(qty) + '</span>' : '') +
+              '<span class="ingredient-name">' + esc(ing.name || "—") + '</span>' +
+              '</div>';
+          }).join("") + '</div>';
+      }
+      if (s.type === "Directions" && s.directions.length) {
+        return '<div class="recipe-section"><h2>Directions</h2>' +
+          s.directions.map(function(d, i) {
+            return '<div class="direction-step">' +
+              '<div class="step-number">' + (i + 1) + '</div>' +
+              '<div>' +
+              (d.heading ? '<div class="step-heading">' + esc(d.heading) + '</div>' : '') +
+              '<div class="step-text">' + esc(d.text || "") + '</div>' +
+              '</div></div>';
+          }).join("") + '</div>';
+      }
+      if (s.type === "Nutrition" && s.items.length) {
+        return '<div class="recipe-section"><h2>Nutrition</h2>' +
+          '<table class="nutrition-items"><thead><tr>' +
+          '<th>Ingredient</th><th>kcal</th><th>Carbs</th><th>Protein</th><th>Fat</th>' +
+          '</tr></thead><tbody>' +
+          s.items.map(function(item) {
+            return '<tr><td>' + esc(item.name) + '</td><td>' + fmtNum(item.energy) + '</td><td>' + fmtNum(item.carbs) + 'g</td><td>' + fmtNum(item.proteins) + 'g</td><td>' + fmtNum(item.fats) + 'g</td></tr>';
+          }).join("") +
+          '</tbody></table></div>';
+      }
+      if (s.type === "Video" && s.videoLink) {
+        var embedUrl = youtubeEmbedUrl(s.videoLink);
+        if (embedUrl) {
+          return '<div class="recipe-section"><h2>' + esc(s.title || "Video") + '</h2>' +
+            '<div class="video-container"><iframe src="' + esc(embedUrl) + '" allowfullscreen loading="lazy"></iframe></div></div>';
+        }
+        return '<div class="recipe-section"><h2>' + esc(s.title || "Video") + '</h2><p style="color:var(--dark-gray);font-size:14px">' + esc(s.videoLink) + '</p></div>';
+      }
+      if (s.type === "ShoppingList" && s.list.length) {
+        return '<div class="recipe-section"><h2>' + esc(s.title || "Shopping List") + '</h2>' +
+          '<ul class="shopping-list">' +
+          s.list.map(function(i){ return '<li class="shopping-item">' + esc(i.name) + '</li>'; }).join("") +
+          '</ul></div>';
+      }
+      if (s.title) {
+        return '<div class="recipe-section"><h2>' + esc(s.title) + '</h2></div>';
+      }
+      return "";
+    }
+
+    function youtubeEmbedUrl(url) {
+      var match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+      return match ? "https://www.youtube-nocookie.com/embed/" + match[1] : null;
+    }
+
+    // ── Push server data to form inputs ───────────────────────────────────
+
+    function pushToForm() {
+      document.getElementById("recipe-name").value  = state.name;
+      document.getElementById("recipe-desc").value  = state.description;
+      document.getElementById("recipe-image").value = state.image;
+      renderBoardChips();
+      renderTagsList();
+      renderSectionsList();
+      renderPreview();
+    }
+
+    // ── Import ─────────────────────────────────────────────────────────────
+
+    function editorImportJSON() {
+      document.getElementById("import-modal-error").textContent = "";
+      document.getElementById("import-modal-textarea").value = "";
+      document.getElementById("import-modal-backdrop").style.display = "block";
+      document.getElementById("import-modal").style.display = "flex";
+      document.getElementById("import-modal-textarea").focus();
+    }
+
+    function editorCloseImportModal() {
+      document.getElementById("import-modal-backdrop").style.display = "none";
+      document.getElementById("import-modal").style.display = "none";
+    }
+
+    function editorConfirmImport() {
+      var json = document.getElementById("import-modal-textarea").value.trim();
+      var errorEl = document.getElementById("import-modal-error");
+      if (!json) { errorEl.textContent = "Please paste a JSON recipe."; return; }
+      try {
+        var parsed = JSON.parse(json);
+        var recipe = parsed.recipe || parsed;
+        state.name        = recipe.name        || "";
+        state.description = recipe.description || "";
+        state.image       = recipe.image       || "";
+        state.boards      = recipe.boards      || [];
+        state.tags        = (recipe.tags || []).map(function(t){ return Object.assign({ _id: uid() }, t); });
+        state.sections    = (recipe.sections || []).map(normSection);
+        editorCloseImportModal();
+        pushToForm();
+      } catch (e) {
+        errorEl.textContent = "Invalid JSON: " + e.message;
+      }
+    }
+
+    // ── Export ─────────────────────────────────────────────────────────────
+
+    function editorExportJSON() {
+      var recipe = buildExportRecipe();
+      var json = JSON.stringify({ recipe: recipe }, null, 2);
+      var blob = new Blob([json], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = (state.name || "recipe").replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function buildExportRecipe() {
+      return {
+        name:        state.name,
+        description: state.description,
+        image:       state.image,
+        boards:      state.boards,
+        tags:        state.tags.map(function(t){ return { name: t.name, lightColor: t.lightColor, darkColor: t.darkColor }; }),
+        sections:    state.sections.map(function(s) {
+          var out = { title: s.title };
+          if (s.type === "Ingredients") {
+            out.ingredients = s.ingredients.map(function(i){ return { name: i.name, quantity: i.quantity, unit: i.unit }; });
+          } else if (s.type === "Directions") {
+            out.directions = s.directions.map(function(d){ return { heading: d.heading, text: d.text }; });
+          } else if (s.type === "Nutrition") {
+            out.items = s.items.map(function(n){ return { name: n.name, quantity: parseFloat(n.quantity)||0, unit: n.unit, nutrients: { energy: parseFloat(n.energy)||0, carbs: parseFloat(n.carbs)||0, proteins: parseFloat(n.proteins)||0, fats: parseFloat(n.fats)||0 } }; });
+          } else if (s.type === "Video") {
+            out.videoLink = s.videoLink;
+          } else if (s.type === "ShoppingList") {
+            out.list = s.list.map(function(i){ return { name: i.name }; });
+          }
+          return out;
+        })
+      };
+    }
+
+    // ── Mobile preview toggle ──────────────────────────────────────────────
+
+    function editorToggleMobilePreview() {
+      var cols = document.getElementById("editor-columns");
+      cols.classList.toggle("preview-active");
+    }
+
+    // ── Keyboard shortcut: Enter in "add" inputs ───────────────────────────
+
+    document.getElementById("new-board").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") { e.preventDefault(); editorAddBoard(); }
+    });
+    document.getElementById("new-tag-name").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") { e.preventDefault(); editorAddTag(); }
+    });
+
+    // ── Initial render ─────────────────────────────────────────────────────
+
+    renderBoardChips();
+    renderTagsList();
+    renderSectionsList();
+    renderPreview();
+    </script>
+  </body>
+</html>
+{{end}}
