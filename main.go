@@ -288,6 +288,22 @@ func handleExampleRecipe(c *gin.Context) {
 	c.HTML(http.StatusOK, "recipe", rr.Recipe)
 }
 
+// handleExampleProduct renders the product page using testdata/example_product.json.
+// Only registered in non-release mode (GIN_MODE != release).
+func handleExampleProduct(c *gin.Context) {
+	data, err := os.ReadFile("testdata/example_product.json")
+	if err != nil {
+		renderError(c, http.StatusInternalServerError, "Example not found", "Could not read testdata/example_product.json.")
+		return
+	}
+	var product Product
+	if err := json.Unmarshal(data, &product); err != nil {
+		renderError(c, http.StatusInternalServerError, "Example invalid", "Could not parse testdata/example_product.json.")
+		return
+	}
+	c.HTML(http.StatusOK, "product", product)
+}
+
 func handlePrivacyPolicy(c *gin.Context) {
 	c.File("prev-website/privacy-policy/index.html")
 }
@@ -311,10 +327,12 @@ func main() {
 	router.GET("/products/:id", handleProduct)
 	router.GET("/privacy-policy", handlePrivacyPolicy)
 
-	// Dev-only: preview the recipe page with local example data.
+	// Dev-only: preview the recipe/product pages with local example data.
 	if gin.Mode() != gin.ReleaseMode {
 		router.GET("/recipes/_example", handleExampleRecipe)
 		log.Printf("Dev route registered: GET /recipes/_example")
+		router.GET("/products/_example", handleExampleProduct)
+		log.Printf("Dev route registered: GET /products/_example")
 	}
 
 	addr := listenAddr()

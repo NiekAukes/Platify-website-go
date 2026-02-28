@@ -4,6 +4,7 @@ struct */}} {{define "product"}}
 <html lang="en">
   {{template "head" (printf "%s – Platify" .Name)}}
   <body>
+    {{template "theme-toggle" ""}}
     <div class="detail-page">
       {{template "hero-image" (dict "Src" .Thumbnail "Alt" .Name)}}
 

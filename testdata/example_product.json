@@ -1,0 +1,12 @@
+{
+  "id": "_example",
+  "name": "Whole Milk",
+  "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Foodstuff_-_Whole_milk.jpg/640px-Foodstuff_-_Whole_milk.jpg",
+  "unit": "100ml",
+  "nutrients": {
+    "energy": 61,
+    "carbs": 4.8,
+    "proteins": 3.2,
+    "fats": 3.3
+  }
+}
