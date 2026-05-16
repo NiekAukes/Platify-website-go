@@ -28,13 +28,22 @@ func listenAddr() string {
 	if v := os.Getenv("PORT"); v != "" {
 		return ":" + v
 	}
-	return ":8080"
+	return ":80"
 }
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
-type RecipeResponse struct {
+type ContentJSON struct {
 	Recipe Recipe `json:"recipe"`
+}
+
+type RecipeResponse struct {
+	ID          string      `json:"id"`
+	OwnerID     string      `json:"owner_id"`
+	Title       string      `json:"title"`
+	ContentJSON ContentJSON `json:"content_json"`
+	IsShared    bool        `json:"is_shared"`
+	ImageCount  int         `json:"imagecount"`
 }
 
 type Recipe struct {
@@ -167,7 +176,7 @@ func loadTemplates() *template.Template {
 // ─── API client ──────────────────────────────────────────────────────────────
 
 func fetchRecipe(id string) (*Recipe, error) {
-	url := apiBase() + "/recipes/" + id
+	url := apiBase() + "/api/v1/recipes/" + id
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -192,7 +201,8 @@ func fetchRecipe(id string) (*Recipe, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&rr); err != nil {
 		return nil, err
 	}
-	return &rr.Recipe, nil
+	fmt.Printf("Fetched recipe %q: %+v\n", id, rr.ContentJSON.Recipe)
+	return &rr.ContentJSON.Recipe, nil
 }
 
 func fetchProduct(id string) (*Product, error) {
@@ -285,7 +295,7 @@ func handleExampleRecipe(c *gin.Context) {
 		renderError(c, http.StatusInternalServerError, "Example invalid", "Could not parse testdata/example_recipe.json.")
 		return
 	}
-	c.HTML(http.StatusOK, "recipe", rr.Recipe)
+	c.HTML(http.StatusOK, "recipe", rr.ContentJSON.Recipe)
 }
 
 // handleExampleProduct renders the product page using testdata/example_product.json.

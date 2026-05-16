@@ -20,8 +20,6 @@
         {{else if and (eq .Title "Directions") .Directions}} {{template
         "directions" .Directions}} {{else if .VideoLink}} {{template
         "video-embed" .}} {{else if .List}} {{template "shopping-list" .}}
-        {{else}}
-        <div class="recipe-section"><h2>{{.Title}}</h2></div>
         {{end}} {{end}}
       </div>
     </div>
