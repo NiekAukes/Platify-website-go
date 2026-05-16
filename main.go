@@ -28,7 +28,7 @@ func listenAddr() string {
 	if v := os.Getenv("PORT"); v != "" {
 		return ":" + v
 	}
-	return ":80"
+	return ":8080"
 }
 
 // ─── Data models ─────────────────────────────────────────────────────────────
