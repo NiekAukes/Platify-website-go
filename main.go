@@ -352,6 +352,12 @@ func main() {
 	router.GET("/contact", handleContact)
 	router.GET("/how-it-works", handleHowItWorks)
 
+	// file serving for app-ads.txt (for ad monetization compliance)
+	router.GET("/app-ads.txt", func(c *gin.Context) {
+		c.File("static/app-ads.txt")
+		c.Header("Content-Type", "text/plain")
+	})
+
 	// Dev-only: preview the recipe/product pages with local example data.
 	if gin.Mode() != gin.ReleaseMode {
 		router.GET("/recipes/_example", handleExampleRecipe)
